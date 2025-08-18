@@ -1,5 +1,7 @@
 # WorkSmart AI Coach 🤖
 
+Based on https://github.com/trilogy-group/aicoe-ai_coach/blob/master/ai_coach.py
+
 **Self-Sustained AI-Powered Productivity Coaching**
 
 NO Python installation required! Complete productivity coaching system that works out-of-the-box on any macOS system.
@@ -7,14 +9,16 @@ NO Python installation required! Complete productivity coaching system that work
 ## 🎯 For Users (Zero Setup Required)
 
 ### 📦 Download & Run
-1. **Download:** `WorkSmart-AI-Coach-Self-Sustained-v1.0.0.dmg`
+
+1. **Download:** `WorkSmart-AI-Coach.dmg`
 2. **Mount:** Double-click the DMG file
 3. **Install:** Drag "WorkSmart AI Coach" to Applications
 4. **Launch:** Double-click "🚀 Launch WorkSmart AI Coach.command"
 5. **Done!** Follow the setup prompts - that's it!
 
 ### ✨ What You Get
-- **Real-time productivity monitoring** 
+
+- **Real-time productivity monitoring**
 - **AI-powered coaching suggestions**
 - **Activity pattern analysis**
 - **Desktop notifications**
@@ -22,7 +26,9 @@ NO Python installation required! Complete productivity coaching system that work
 - **Complete self-contained app** (NO Python needed!)
 
 ### 🔧 First Launch Setup
+
 The app will prompt you for:
+
 - **CrossOver files path** (default: ~/crossoverFiles)
 - **Anthropic API key** (optional - get free key at https://console.anthropic.com)
 
@@ -31,7 +37,7 @@ Settings saved to `~/.worksmart-ai-coach/.env` - edit anytime to update.
 ## 🚀 What It Does
 
 1. **Monitors** your computer activity (apps, windows, productivity patterns)
-2. **Analyzes** focus levels and work habits  
+2. **Analyzes** focus levels and work habits
 3. **Provides** real-time coaching suggestions via desktop notifications
 4. **Tracks** daily statistics and progress
 5. **Learns** from your behavior to improve recommendations
@@ -47,7 +53,7 @@ Settings saved to `~/.worksmart-ai-coach/.env` - edit anytime to update.
 ============================
 
 📁 CrossOver Files Path
-Enter path (default: ~/crossoverFiles): 
+Enter path (default: ~/crossoverFiles):
 
 🔑 Anthropic API Key
 Get free API key: https://console.anthropic.com
@@ -55,7 +61,7 @@ Get free API key: https://console.anthropic.com
 2. Skip (basic mode)
 
 Choose (1/2): 1
-🔐 API Key (hidden): 
+🔐 API Key (hidden):
 ✅ API key saved!
 
 🎯 Starting AI Coach...
@@ -90,6 +96,7 @@ Choose (1/2): 1
 ## 🛠️ For Developers
 
 ### Building from Source
+
 ```bash
 # Clone repository
 git clone https://github.com/StanHus/worksmart-ai_coach.git
@@ -99,9 +106,10 @@ cd worksmart-ai_coach
 ./build_dmg.sh
 ```
 
-This creates `WorkSmart-AI-Coach-Self-Sustained-v1.0.0.dmg` with embedded Python runtime.
+This creates `WorkSmart-AI-Coach.dmg` with embedded Python runtime.
 
 ### Development Setup
+
 ```bash
 # For development (requires Python)
 python3 -m worksmart_ai_coach.launchers.enhanced
@@ -111,10 +119,11 @@ pip install -e . --user
 ```
 
 ### Project Structure
+
 ```
 worksmart_ai_coach/
 ├── cli/           # Command-line interface
-├── core/          # AI coaching logic  
+├── core/          # AI coaching logic
 ├── bridge/        # WorkSmart integration
 └── launchers/     # Application launchers
 
@@ -126,7 +135,7 @@ build_dmg.sh       # Builds self-sustained DMG
 **App won't launch**: Check that you're running macOS 10.12+  
 **No AI features**: Add your Anthropic API key during setup  
 **Permission issues**: Grant accessibility permissions in System Preferences  
-**WorkSmart integration**: Set correct CrossOver files path during setup  
+**WorkSmart integration**: Set correct CrossOver files path during setup
 
 ## 📄 License
 
@@ -143,7 +152,7 @@ MIT License - see [LICENSE](LICENSE) file.
 
 - **Users without Python installed**
 - **Corporate environments with restrictions**
-- **Easy deployment and distribution** 
+- **Easy deployment and distribution**
 - **Professional productivity coaching**
 - **Anyone wanting zero-setup productivity tools**
 

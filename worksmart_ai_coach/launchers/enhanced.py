@@ -263,14 +263,25 @@ class EnhancedProductionLauncher:
             message = coaching_result.get('message', 'No specific advice')
             priority = coaching_result.get('priority', 2)
             reasoning = coaching_result.get('reasoning', 'Generic advice')
+            detailed_guidance = coaching_result.get('detailed_guidance', '')
+            confidence = coaching_result.get('confidence', 0)
+            timing = coaching_result.get('timing', 'immediate')
+            impact_prediction = coaching_result.get('impact_prediction', '')
 
-            print(f"\n💡 PERSONALIZED AI COACHING:")
-            print(f"   {message}")
-            print(f"   Priority: {priority}/3")
+            print(f"\n💡 ENHANCED AI COACHING:")
+            print(f"   📝 {message}")
+            if detailed_guidance:
+                print(f"   📋 {detailed_guidance}")
+            print(f"   ⚡ Priority: {priority}/3 | Confidence: {confidence:.0%}")
             print(f"   🧠 Reasoning: {reasoning}")
+            if timing != 'immediate':
+                print(f"   ⏰ Timing: {timing}")
+            if impact_prediction:
+                print(f"   🎯 Expected Impact: {impact_prediction}")
 
             # Show desktop notification
-            self.show_coaching_notification(message, priority)
+            notification_message = detailed_guidance if detailed_guidance else message
+            self.show_coaching_notification(notification_message, priority)
 
             # Log coaching with enhanced data
             self.log_coaching(coaching_result, analysis)

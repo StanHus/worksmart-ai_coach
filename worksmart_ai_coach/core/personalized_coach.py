@@ -16,6 +16,7 @@ from .context_tracker import ContextHistoryTracker
 from .micro_interventions import MicroInterventionSystem
 from .adaptive_learning import AdaptiveLearningSystem
 from .worksmart_reader import WorkSmartDataReader
+# Enhanced coaching functionality consolidated into this file
 
 class PersonalizedAICoach(AICoach):
     """AI Coach with personalized algorithms based on learned patterns"""
@@ -28,6 +29,7 @@ class PersonalizedAICoach(AICoach):
         self.micro_interventions = MicroInterventionSystem()
         self.adaptive_learning = AdaptiveLearningSystem()
         self.worksmart_reader = WorkSmartDataReader()
+        # Enhanced coaching functionality integrated directly
         
         # Track current intervention for follow-up
         self.current_intervention_id = None
@@ -394,7 +396,30 @@ class PersonalizedAICoach(AICoach):
                 "should_notify": micro_intervention['should_notify']
             }
         
-        # Priority 3: Fall back to standard personalized logic
+        # Priority 3: Enhanced context-aware coaching (integrated)
+        energy_level = self._assess_energy_level(analysis)
+        time_context = self._get_time_context()
+        work_mode = self._detect_work_mode(context, analysis)
+        
+        print(f"🚀 Enhanced coaching analysis: {current_app} | energy={energy_level} | time={time_context} | mode={work_mode}")
+        
+        # Generate enhanced coaching based on rich context
+        enhanced_coaching = self._generate_enhanced_coaching_message(
+            current_app, context, analysis, energy_level, time_context, work_mode, duration_minutes
+        )
+        
+        if enhanced_coaching:
+            print(f"✨ Enhanced coaching recommendation: {enhanced_coaching.get('action')} (confidence: {enhanced_coaching.get('confidence', 0.7):.0%})")
+            
+            # Track intervention for adaptive learning
+            self.current_intervention_id = self.adaptive_learning.track_intervention(
+                enhanced_coaching, context, analysis
+            )
+            self.intervention_timestamp = datetime.now()
+            
+            return enhanced_coaching
+
+        # Priority 4: Fall back to standard personalized logic
         current_state = self._classify_current_state(analysis)
         should_intervene, intervention_type, reason = self.should_intervene_personalized(
             current_state, duration_minutes, context
@@ -440,6 +465,65 @@ class PersonalizedAICoach(AICoach):
         
         return message_data
     
+    def _assess_energy_level(self, analysis: Dict) -> str:
+        """Assess user's current energy level based on activity patterns"""
+        activity_level = analysis.get('activity_level', 'medium')
+        session_hours = analysis.get('session_hours', 0)
+        
+        if session_hours > 2 and activity_level == 'low':
+            return "low"
+        elif activity_level == 'high' and session_hours < 1:
+            return "high"
+        else:
+            return "medium"
+    
+    def _get_time_context(self) -> str:
+        """Get current time context for coaching"""
+        hour = datetime.now().hour
+        
+        if 6 <= hour < 9:
+            return "early_morning"
+        elif 9 <= hour < 12:
+            return "morning_focus"
+        elif 12 <= hour < 14:
+            return "lunch_time"
+        elif 14 <= hour < 17:
+            return "afternoon_work"
+        elif 17 <= hour < 20:
+            return "evening_wind_down"
+        else:
+            return "late_hours"
+    
+    def _detect_work_mode(self, context: Dict, analysis: Dict) -> str:
+        """Detect current work mode for targeted coaching"""
+        current_app = analysis.get('current_app', '').lower()
+        window_title = context.get('current_window', '').lower()
+        
+        # Meeting detection
+        if any(keyword in current_app for keyword in ['zoom', 'teams', 'meet', 'skype']):
+            return "meeting"
+        
+        # Browser work
+        if any(keyword in current_app for keyword in ['chrome', 'firefox', 'safari', 'edge']):
+            if context.get('window_count', 0) > 10:
+                return "research_mode"
+            else:
+                return "web_work"
+        
+        # Development work
+        if any(keyword in current_app for keyword in ['code', 'studio', 'intellij', 'pycharm', 'cursor']):
+            return "deep_work"
+        
+        # Creative work
+        if any(keyword in current_app for keyword in ['photoshop', 'illustrator', 'figma', 'sketch']):
+            return "creative"
+        
+        # Communication
+        if any(keyword in current_app for keyword in ['slack', 'discord', 'mail', 'outlook']):
+            return "communication"
+        
+        return "standard"
+    
     def get_learning_summary(self) -> Dict[str, Any]:
         """Get comprehensive learning and effectiveness summary"""
         learning_summary = self.adaptive_learning.get_learning_summary()
@@ -479,6 +563,98 @@ class PersonalizedAICoach(AICoach):
         print(f"   Personal patterns: {summary['personal_patterns_loaded']}")
         
         print("💾 All learning data saved successfully")
+    
+    def _generate_enhanced_coaching_message(self, current_app: str, context: Dict, analysis: Dict, 
+                                           energy_level: str, time_context: str, work_mode: str, 
+                                           duration_minutes: float) -> Optional[Dict]:
+        """Generate enhanced coaching message based on rich context analysis"""
+        
+        productivity_score = analysis.get('productivity_score', 0.5)
+        focus_quality = analysis.get('focus_quality', 0.5)
+        tab_count = self._get_tab_count(context)
+        
+        # Context-aware coaching logic following existing patterns
+        
+        # Deep work protection (high focus, good productivity)
+        if work_mode == "deep_work" and focus_quality > 0.8 and productivity_score > 0.7:
+            if duration_minutes < 90:  # Protect deep work sessions
+                return None
+            else:
+                return {
+                    "message": f"Excellent deep work session! You've maintained {focus_quality:.0%} focus for {duration_minutes:.0f} minutes. Consider a brief break to sustain this high performance.",
+                    "action": "deep_work_sustain",
+                    "priority": 2,
+                    "confidence": 0.9,
+                    "reasoning": "Deep work session protection with sustainable break suggestion"
+                }
+        
+        # Meeting mode optimization
+        if work_mode == "meeting":
+            if tab_count > 5:
+                return {
+                    "message": f"In meeting with {tab_count} tabs open. Consider closing non-essential tabs to improve focus and meeting engagement.",
+                    "action": "meeting_focus",
+                    "priority": 2,
+                    "confidence": 0.8,
+                    "reasoning": "Meeting focus optimization"
+                }
+            return None  # Don't interrupt good meetings
+        
+        # Energy-aware coaching
+        if energy_level == "low" and time_context in ["afternoon_work", "evening_wind_down"]:
+            if self._detect_ai_tools(context):
+                return {
+                    "message": f"Low energy detected in {time_context.replace('_', ' ')}. AI tools can help maintain productivity when energy is low. Continue with focused AI-assisted work.",
+                    "action": "energy_aware_ai",
+                    "priority": 2,
+                    "confidence": 0.85,
+                    "reasoning": "Energy-aware AI tool optimization"
+                }
+            else:
+                return {
+                    "message": f"Low energy in {time_context.replace('_', ' ')}. Consider AI tools like ChatGPT or Grok to boost cognitive engagement.",
+                    "action": "energy_boost",
+                    "priority": 2,
+                    "suggested_tools": ["ChatGPT", "Grok"],
+                    "confidence": 0.8,
+                    "reasoning": "Energy-aware tool suggestion"
+                }
+        
+        # Time-sensitive coaching
+        if time_context == "morning_focus" and productivity_score < 0.5:
+            return {
+                "message": "Morning focus window detected but productivity is low. This is prime time for your most important work. Consider starting with AI-assisted planning or creative tasks.",
+                "action": "morning_optimization",
+                "priority": 1,
+                "suggested_tools": ["ChatGPT - Planning", "Grok"],
+                "confidence": 0.85,
+                "reasoning": "Morning productivity window optimization"
+            }
+        
+        # Web work tab management (common pattern)
+        if work_mode == "web_work" and tab_count > self.personal_patterns['tab_overload_threshold']:
+            return {
+                "message": f"Web work with {tab_count} tabs detected. Your optimal focus happens with ≤{self.personal_patterns['optimal_tab_count']} tabs. Consider consolidating or bookmarking.",
+                "action": "web_work_focus",
+                "priority": 2,
+                "confidence": 0.9,
+                "reasoning": "Web work tab optimization based on personal patterns"
+            }
+        
+        # Research mode guidance
+        if work_mode == "research_mode" and duration_minutes > 20:
+            if not self._detect_ai_tools(context):
+                return {
+                    "message": f"Extended research session ({duration_minutes:.0f} min). Consider using AI tools to synthesize findings and generate insights from your research.",
+                    "action": "research_synthesis",
+                    "priority": 2,
+                    "suggested_tools": ["ChatGPT", "Grok"],
+                    "confidence": 0.8,
+                    "reasoning": "Research synthesis optimization"
+                }
+        
+        # No enhanced coaching needed
+        return None
     
     def _generate_personalized_message(self, state: str, context: Dict, analysis: Dict, reason: str) -> Dict:
         """Generate context-aware personalized coaching message"""

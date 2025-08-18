@@ -163,7 +163,7 @@ if [ -f "dist/WorkSmart-AI-Coach" ]; then
     echo "✅ Self-sustained executable built!"
     
     # Create DMG
-    DMG_NAME="WorkSmart-AI-Coach-Self-Sustained-v1.0.0"
+    DMG_NAME="WorkSmart-AI-Coach"
     FOLDER_NAME="WorkSmart AI Coach"
     
     # Clean up
