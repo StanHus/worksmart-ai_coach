@@ -1,183 +1,147 @@
-# WorkSmart AI Coach
+# WorkSmart AI Coach 🤖
 
-**Ultimate AI-powered productivity coaching system with advanced intelligence layers.**
+AI-powered productivity coaching system that integrates with WorkSmart tracker to provide real-time insights and personalized suggestions.
 
-## 🚀 Features
-
-### Core Intelligence Systems
-- **🧠 Personalized AI Coaching** - Uses your actual productivity patterns instead of generic advice
-- **📊 Real-Time Context Tracking** - Maintains 6-hour activity memory for pattern analysis
-- **🔮 Predictive Analysis** - Recommends optimal next actions with confidence scores
-- **⚡ Momentum Detection** - Identifies post-meeting energy and AI tool recovery patterns
-- **🔔 Micro-Interventions** - Gentle 2-3 minute nudges vs disruptive full interventions
-- **🎓 Adaptive Learning** - Tracks coaching effectiveness and improves over time
-
-### Key Capabilities
-- **5-minute unproductive intervention rule** (vs generic 10+ minute delays)
-- **AI tool suggestions** (Grok, ChatGPT) based on learned recovery patterns
-- **Tab count intelligence** (optimal ≤9 tabs, penalty for 10+ tabs)
-- **Flow state protection** to avoid interrupting high-productivity periods
-- **Context-aware productivity scoring** with personal multipliers
-- **Effectiveness tracking** with 5-minute and 15-minute outcome measurements
-
-## 🛠 Installation
+## ⚡ Quick Start
 
 ```bash
-# Install the package
-pip install -e .
-
-# Verify installation
-wsai --version
-worksmart-enhanced help
+# Clone and run
+git clone https://github.com/StanHus/worksmart-ai_coach.git
+cd worksmart-ai_coach
+python3 -m worksmart_ai_coach.launchers.enhanced
 ```
 
-## 🎯 Usage
+## 📦 Installation Options
 
-### Enhanced AI Coach (Recommended)
+### Option 1: Direct Run (Fastest)
 ```bash
-# Start the advanced AI coaching system
+python3 -m worksmart_ai_coach.launchers.enhanced
+```
+
+### Option 2: Install Package
+```bash
+pip install -e . --user
 worksmart-enhanced
-
-# Check system status
-worksmart-enhanced status
-
-# View daily productivity stats
-worksmart-enhanced stats
 ```
 
-### Standard Interface
+### Option 3: One-Line Install
 ```bash
-# Alternative interface
-wsai start
-
-# Show system information
-wsai status
-
-# View statistics
-wsai stats
+curl -fsSL https://raw.githubusercontent.com/StanHus/worksmart-ai_coach/main/install.sh | bash
 ```
 
-### Integration with WorkSmart
+## ⚙️ Configuration
+
+Create `~/.worksmart-ai-coach/.env`:
 ```bash
-# Start bridge for Java WorkSmart integration
-worksmart-bridge
+# Required: Path to CrossOver files
+CROSSOVER_FILES_PATH=~/crossoverFiles
 
-# Manual feedback collection
-worksmart-feedback
+# Optional: Anthropic API key for AI features  
+ANTHROPIC_API_KEY=your_key_here
+
+# Optional: Debug mode
+DEBUG=true
 ```
 
-## 🧪 Example Intelligence
+## 🚀 Usage
 
-### Micro-Interventions (2-3 minutes)
-```
-🔔 "Noticed 14 tabs open. Consider focusing on 1-2 key tabs for better concentration."
-```
+```bash
+# Start the coach
+python3 -m worksmart_ai_coach.launchers.enhanced
 
-### Momentum Detection
-```
-💡 "Perfect timing! Your 23-minute meeting showed excellent focus. 
-    This is the ideal moment for AI-assisted creative work. 
-    The momentum transfer window is now open."
+# After installing package
+worksmart-enhanced              # Start enhanced mode
+wsai status                     # Check status  
+wsai start --mode enhanced     # CLI version
 ```
 
-### Adaptive Learning
-```
-🧠 System learns: "Tab consolidation suggestions work best around 14:00 
-    with 85% effectiveness for this user"
-```
-
-### Predictive Analysis
-```
-🔮 "Start AI-assisted creative work. Confidence: 85%. 
-    Post-meeting momentum transfer pattern detected."
-```
-
-## 📊 Personal Pattern Examples
-
-The system automatically discovers and uses your personal productivity correlations:
-
-- **High Productivity**: AI tools (Grok, ChatGPT) + focused tabs (≤9) + file activity
-- **Meeting Excellence**: Safari + single focus + 20+ minute engagement  
-- **Recovery Patterns**: Social media → Google → AI tools (4-5 minute sequence)
-- **Tab Intelligence**: 10+ tabs = distraction, 6-9 tabs = optimal focus
-- **Timing Patterns**: Post-meeting momentum windows, optimal intervention hours
-
-## 🎛 Configuration
-
-### Environment Variables
-Create a `.env` file:
-```env
-# Claude AI API (required)
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-
-# Optional settings
-WORKSMART_COACH_INTERVAL=100  # seconds between checks
-WORKSMART_COACH_DEBUG=false   # enable debug logging
-```
-
-### Personal Patterns
-The system automatically learns your patterns from usage, but you can also provide historical data in `consolidated_learning_data.json` format.
-
-## 📁 Data Files
-
-The system creates several data files for learning and tracking:
-- `context_history_YYYY-MM-DD.json` - Daily context snapshots
-- `adaptive_learning_YYYY-MM-DD.json` - Intervention effectiveness data
-- `worksmart_session_YYYY-MM-DD.json` - Session statistics
-- `coaching_log_YYYY-MM-DD.json` - Coaching history
-- `daily_stats_YYYY-MM-DD.json` - Daily productivity summaries
-
-## 🔧 Architecture
+## 🏗️ Project Structure
 
 ```
 worksmart_ai_coach/
-├── core/                    # Core AI systems
-│   ├── coach.py            # Base AI coaching engine
-│   ├── personalized_coach.py  # Advanced personalized algorithms
-│   ├── context_tracker.py     # Real-time context memory
-│   ├── micro_interventions.py # Gentle nudge system
-│   ├── adaptive_learning.py   # Effectiveness tracking
-│   └── telemetry.py           # Activity monitoring
-├── cli/                     # Command-line interfaces
-├── launchers/              # System launchers
-│   └── enhanced.py         # Advanced production launcher
-└── bridge/                 # WorkSmart integration
+├── cli/           # Command-line interface
+├── core/          # AI coaching logic
+├── bridge/        # WorkSmart integration
+└── launchers/     # Application launchers
 ```
 
-## 🎓 Learning Evolution
+## 🧠 Features
 
-**Stage 1**: Generic coaching based on activity levels
-**Stage 2**: Pattern recognition from user feedback
-**Stage 3**: Personalized algorithms using discovered correlations  
-**Stage 4**: Predictive analysis and momentum detection
-**Stage 5**: Micro-interventions and adaptive learning ← **Current**
+- **Real-time Activity Monitoring** - Tracks apps, windows, productivity patterns
+- **AI-Powered Coaching** - Personalized suggestions via Anthropic Claude
+- **WorkSmart Integration** - Reads telemetry data from WorkSmart tracker
+- **Adaptive Learning** - Improves suggestions based on your behavior
+- **Session Persistence** - Maintains data across restarts
+- **Cross-Platform** - Works on macOS, Windows, Linux
 
-## 📈 Performance Metrics
+## 📊 What It Does
 
-- **Response Time**: 2-3 minute micro-nudges vs previous 10+ minute delays
-- **Accuracy**: Personal correlation-based vs generic activity scoring
-- **Effectiveness**: Measured and tracked vs unknown outcomes
-- **Intelligence**: Self-learning adaptive system vs static patterns
-- **Context**: 6-hour memory vs single-event analysis
+1. **Monitors** your computer activity (apps, windows, keystrokes)
+2. **Analyzes** productivity patterns and focus levels
+3. **Provides** real-time coaching suggestions
+4. **Tracks** daily statistics and progress
+5. **Learns** from your habits to improve recommendations
 
-## 🤝 Contributing
+## 🔧 Requirements
 
-The system is designed to learn and adapt. The most valuable contributions are:
-1. Using the system and providing feedback
-2. Sharing productivity pattern insights
-3. Reporting effectiveness measurements
-4. Contributing to pattern recognition algorithms
+- **Python**: 3.8+
+- **OS**: macOS 10.12+, Windows 10+, Linux 18.04+
+- **WorkSmart**: Optional but recommended for full features
+- **API Key**: Optional for AI features (uses rule-based fallback)
 
-## 📜 License
+## 📈 Output Example
 
-MIT License - see LICENSE file for details.
+```
+🚀 WORKSMART ENHANCED AI COACH
+============================================================
+🕐 Started at: 2025-08-18 20:42:16
+📅 Session date: 2025-08-18
 
-## 🔗 Links
+✅ Using WorkSmart telemetry as primary data source
+📅 Loaded existing session data
+🤖 Enhanced AI Coach monitoring started
 
-- **Documentation**: Enhanced coaching algorithms and personal pattern system
-- **Archive**: `archive/` contains legacy files and development history
-- **Learning Data**: Historical productivity patterns and effectiveness measurements
+[20:42:17] 📈 Activity captured:
+  App: Cursor
+  Window: .env — crossover...
+  Coaching Session: 0.76h
+  WorkSmart Today: 9:50
+  Activity: 110🔤 7🖱️
+```
+
+## 🛠️ Development
+
+```bash
+# Clone repository
+git clone https://github.com/StanHus/worksmart-ai_coach.git
+cd worksmart-ai_coach
+
+# Install in development mode
+pip install -e . --user
+
+# Run tests (basic validation)
+python3 -c "import worksmart_ai_coach; print('✅ Package OK')"
+
+# Check configuration
+python3 -m worksmart_ai_coach.launchers.enhanced status
+```
+
+## 🔍 Troubleshooting
+
+**Module Not Found**: `pip install -e . --user --force-reinstall`  
+**Command Not Found**: Add `~/.local/bin` to your PATH  
+**WorkSmart Issues**: Check `CROSSOVER_FILES_PATH` in `.env`  
+**No AI Features**: Add `ANTHROPIC_API_KEY` to `.env`  
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+## 🆘 Support
+
+- [Issues](https://github.com/StanHus/worksmart-ai_coach/issues)
+- [Discussions](https://github.com/StanHus/worksmart-ai_coach/discussions)
 
 ---
 
-**From "Data Rich, Intelligence Poor" to "Data Rich, Intelligence Superior"** 🚀
+**Ready to boost your productivity? Just run:** `python3 -m worksmart_ai_coach.launchers.enhanced` 🚀
