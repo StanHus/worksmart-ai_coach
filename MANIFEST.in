@@ -1,0 +1,15 @@
+include README.md
+include LICENSE
+include INSTALL.md
+include .env.template
+include requirements.txt
+include install.sh
+include test_install.py
+recursive-include worksmart_ai_coach *.py
+recursive-include worksmart_ai_coach/data *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+exclude .env
+exclude *.json
+exclude build/*
+exclude dist/*

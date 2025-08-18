@@ -1,0 +1,47 @@
+# Environment files
+.env
+.env.*
+.venv/
+venv/
+
+# IDE files
+.vscode/
+.idea/
+
+# archive
+archive/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Testing
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Runtime data files
+*.json
+!requirements.txt
+!pyproject.toml
+
+# Archive (keep in repo for reference)
+# archive/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
