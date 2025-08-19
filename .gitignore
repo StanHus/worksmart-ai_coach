@@ -1,6 +1,10 @@
 # Environment files
 .env
 .env.local
+
+# Data files
+ultimate_coach_data/
+
 .venv/
 venv/
 

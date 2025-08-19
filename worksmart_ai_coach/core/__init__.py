@@ -2,8 +2,8 @@
 Core WorkSmart AI Coach components
 """
 
-from .coach import AICoach
-from .telemetry import WorkSmartTelemetryCollector, WorkSmartTelemetryAnalyzer
+from .ai_coach import AICoach
+from .telemetry_system import WorkSmartTelemetryCollector, WorkSmartTelemetryAnalyzer
 
 __all__ = [
     "AICoach",

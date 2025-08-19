@@ -6,11 +6,11 @@ __version__ = "1.0.0"
 __author__ = "WorkSmart AI Team"
 __email__ = "support@worksmart.ai"
 
-from .core.coach import AICoach
-from .core.telemetry import WorkSmartTelemetryCollector, WorkSmartTelemetryAnalyzer
+from .core.ai_coach import AICoach
+from .core.telemetry_system import WorkSmartTelemetryCollector, WorkSmartTelemetryAnalyzer
 
 __all__ = [
     "AICoach",
-    "WorkSmartTelemetryCollector", 
+    "WorkSmartTelemetryCollector",
     "WorkSmartTelemetryAnalyzer",
 ]

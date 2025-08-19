@@ -93,10 +93,6 @@ def load_env():
 
 async def main():
     """Main entry point"""
-    print("🚀 WorkSmart AI Coach (Self-Sustained)")
-    print("======================================")
-    print("✨ NO Python installation required!")
-    print("")
     
     try:
         setup_config()
@@ -178,11 +174,6 @@ if [ -f "dist/WorkSmart-AI-Coach" ]; then
     cat > "dmg_temp/$FOLDER_NAME/🚀 Launch WorkSmart AI Coach.command" << 'LAUNCH_EOF'
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-echo "🚀 WorkSmart AI Coach (Self-Sustained)"
-echo "======================================"
-echo "✨ NO Python installation required!"
-echo ""
 
 # Create data directory and run from there
 mkdir -p "$HOME/.worksmart-ai-coach/data"

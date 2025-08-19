@@ -7,18 +7,37 @@ Enhanced version with persistent session tracking and date-based logging.
 Maintains productivity data across restarts and provides historical analysis.
 """
 
-from ..core.telemetry import WorkSmartTelemetryCollector, WorkSmartTelemetryAnalyzer
-from ..core.personalized_coach import PersonalizedAICoach
-from ..core.coach import AICoach
+# Import consolidated systems
+try:
+    from ..core.telemetry_system import WorkSmartTelemetryCollector, WorkSmartTelemetryAnalyzer
+    TELEMETRY_SYSTEM_AVAILABLE = True
+except ImportError as e:
+    print(f"💡 Telemetry System not available: {e}")
+    TELEMETRY_SYSTEM_AVAILABLE = False
+    WorkSmartTelemetryCollector = None
+    WorkSmartTelemetryAnalyzer = None
+
+try:
+    from ..core.ai_coach import AICoach
+    ULTIMATE_AI_COACH_AVAILABLE = True
+except ImportError as e:
+    print(f"💡 Ultimate AI Coach not available: {e}")
+    ULTIMATE_AI_COACH_AVAILABLE = False
+
+# Legacy imports (all moved to legacy folder)
+try:
+    from ..legacy.personalized_coach import PersonalizedAICoach
+    PERSONALIZED_COACH_AVAILABLE = True
+except ImportError:
+    PERSONALIZED_COACH_AVAILABLE = False
 import asyncio
 import json
 import os
 import sys
-import time
 import signal
 import subprocess
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime
+from typing import Dict
 
 # Load environment variables from .env file
 
@@ -53,9 +72,61 @@ class EnhancedProductionLauncher:
     """Enhanced production launcher with persistent session tracking"""
 
     def __init__(self):
-        self.coach = PersonalizedAICoach()  # Use personalized coach instead
-        self.telemetry_collector = WorkSmartTelemetryCollector()
-        self.telemetry_analyzer = WorkSmartTelemetryAnalyzer()
+        # Use Ultimate AI Coach with automatic capability detection
+        if ULTIMATE_AI_COACH_AVAILABLE:
+            try:
+                self.coach = AICoach()
+                system_info = self.coach.get_system_info()
+                self.coach_type = system_info['coach_type']
+                self.is_enhanced = self.coach_type == 'enhanced_ml'
+
+                coach_names = {
+                    'enhanced_ml': 'Ultimate AI Coach with Enhanced ML capabilities',
+                    'personalized': 'Ultimate AI Coach with Personalized features',
+                    'base': 'Ultimate AI Coach with Basic coaching'
+                }
+                print(
+                    f"🧠 Using {coach_names.get(self.coach_type, 'Ultimate AI Coach')}")
+                print(
+                    f"✨ Capabilities: {', '.join(system_info.get('capabilities', []))}")
+
+            except Exception as e:
+                print(f"⚠️ Ultimate AI Coach failed to initialize: {e}")
+                # Fallback to legacy coach
+                if PERSONALIZED_COACH_AVAILABLE:
+                    self.coach = PersonalizedAICoach()
+                    self.coach_type = 'personalized'
+                    self.is_enhanced = False
+                    print("🎭 Fallback to Legacy PersonalizedAICoach")
+                else:
+                    raise Exception("No AI coaching system available")
+
+        elif PERSONALIZED_COACH_AVAILABLE:
+            self.coach = PersonalizedAICoach()
+            self.coach_type = 'personalized'
+            self.is_enhanced = False
+            print("🎭 Using Legacy PersonalizedAICoach")
+
+        else:
+            raise Exception(
+                "No AI coaching system available - check installation")
+
+        # Initialize telemetry system
+        if TELEMETRY_SYSTEM_AVAILABLE:
+            self.telemetry_collector = WorkSmartTelemetryCollector()
+            self.telemetry_analyzer = WorkSmartTelemetryAnalyzer()
+            print("📊 Using consolidated Telemetry System")
+        else:
+            # Try legacy imports
+            try:
+                from ..legacy.telemetry import WorkSmartTelemetryCollector as LegacyTelemetryCollector, WorkSmartTelemetryAnalyzer as LegacyTelemetryAnalyzer
+                self.telemetry_collector = LegacyTelemetryCollector()
+                self.telemetry_analyzer = LegacyTelemetryAnalyzer()
+                print("📊 Using Legacy Telemetry System")
+            except ImportError:
+                raise Exception(
+                    "No telemetry system available - check installation")
+
         self.running = False
         self.java_process = None
 
@@ -74,23 +145,28 @@ class EnhancedProductionLauncher:
             try:
                 with open(self.session_file, 'r') as f:
                     data = json.load(f)
-                
+
                 # Check if session is from a different day
                 session_date = data.get('date', '')
                 if session_date != self.today:
-                    print(f"📅 New day detected ({session_date} → {self.today}), creating fresh session")
+                    print(
+                        f"📅 New day detected ({session_date} → {self.today}), creating fresh session")
                     self._cleanup_old_logs()  # Clean up old logs on new day
                     return self._create_new_session()
-                
+
                 # Same day - accumulate previous session time and start fresh timer
                 if 'session_start' in data:
                     old_start = datetime.fromisoformat(data['session_start'])
-                    previous_session_hours = (datetime.now() - old_start).total_seconds() / 3600
+                    previous_session_hours = (
+                        datetime.now() - old_start).total_seconds() / 3600
                     accumulated_hours = data.get('accumulated_hours_today', 0)
-                    data['accumulated_hours_today'] = accumulated_hours + previous_session_hours
-                    data['session_start'] = datetime.now().isoformat()  # Reset timer for this restart
-                    print(f"📅 Restarted - accumulated {data['accumulated_hours_today']:.1f}h today")
-                
+                    data['accumulated_hours_today'] = accumulated_hours + \
+                        previous_session_hours
+                    # Reset timer for this restart
+                    data['session_start'] = datetime.now().isoformat()
+                    print(
+                        f"📅 Restarted - accumulated {data['accumulated_hours_today']:.1f}h today")
+
                 # Remove legacy fields that are now handled by WorkSmart
                 legacy_fields = ['apps_used',
                                  'total_keystrokes', 'total_mouse_events']
@@ -99,7 +175,7 @@ class EnhancedProductionLauncher:
                 return data
             except:
                 pass
-        
+
         return self._create_new_session()
 
     def _create_new_session(self):
@@ -124,7 +200,7 @@ class EnhancedProductionLauncher:
             self.daily_stats_file,
             "context_history.json"
         ]
-        
+
         cleaned_count = 0
         for file_path in files_to_clean:
             try:
@@ -134,7 +210,7 @@ class EnhancedProductionLauncher:
                     cleaned_count += 1
             except Exception as e:
                 print(f"⚠️ Warning: Could not clean {file_path}: {e}")
-        
+
         if cleaned_count > 0:
             print(f"🧹 Cleaned {cleaned_count} log files for new day")
 
@@ -143,23 +219,23 @@ class EnhancedProductionLauncher:
         try:
             with open(file_path, 'r') as f:
                 data = json.load(f)
-            
+
             # If it's a list of log entries
             if isinstance(data, list):
                 today_entries = [
-                    entry for entry in data 
-                    if entry.get('date') == self.today or 
-                       (entry.get('timestamp', '').startswith(self.today))
+                    entry for entry in data
+                    if entry.get('date') == self.today or
+                    (entry.get('timestamp', '').startswith(self.today))
                 ]
-                
+
                 with open(file_path, 'w') as f:
                     json.dump(today_entries, f, indent=2)
-                    
+
             # If it's a single object with date field, reset it if old
             elif isinstance(data, dict) and data.get('date') != self.today:
                 # Reset the file for new day
                 os.remove(file_path)
-                
+
         except Exception as e:
             # If file is corrupted or unreadable, just remove it
             try:
@@ -196,12 +272,13 @@ class EnhancedProductionLauncher:
         # Use AI Coach session duration for today's total coaching time
         # If restarted multiple times today, continue from where we left off
         start_time = datetime.fromisoformat(self.session_data['session_start'])
-        current_session_hours = (datetime.now() - start_time).total_seconds() / 3600
-        
+        current_session_hours = (
+            datetime.now() - start_time).total_seconds() / 3600
+
         # Add any accumulated time from previous restarts today
         accumulated_hours = self.session_data.get('accumulated_hours_today', 0)
         total_coaching_hours_today = accumulated_hours + current_session_hours
-        
+
         event['coaching_session_hours'] = total_coaching_hours_today
 
         return event
@@ -239,8 +316,9 @@ class EnhancedProductionLauncher:
                 event_buffer.append(event)
 
                 # Display current telemetry (simplified)
-                app_name = event['process_name'][:20] if len(event['process_name']) > 20 else event['process_name']
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] {app_name} | Activity: {event['keyboard_count']}🔤 {event['mouse_count']}🖱️ | Session: {event.get('coaching_session_hours', 0):.1f}h")
+                app_name = event['process_name'][:20] if len(
+                    event['process_name']) > 20 else event['process_name']
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] {app_name} | Activity: {event['keyboard_count']}🔤 {event['mouse_count']}🖱️ | WorkSmart Session: {event.get('session_duration_hours', 0):.1f}h")
 
                 # Save updated session data
                 self.save_session_data()
@@ -268,14 +346,30 @@ class EnhancedProductionLauncher:
     def _save_session_on_shutdown(self):
         """Save accumulated time before shutdown for restarts"""
         try:
-            start_time = datetime.fromisoformat(self.session_data['session_start'])
-            current_session_hours = (datetime.now() - start_time).total_seconds() / 3600
-            accumulated_hours = self.session_data.get('accumulated_hours_today', 0)
-            self.session_data['accumulated_hours_today'] = accumulated_hours + current_session_hours
+            start_time = datetime.fromisoformat(
+                self.session_data['session_start'])
+            current_session_hours = (
+                datetime.now() - start_time).total_seconds() / 3600
+            accumulated_hours = self.session_data.get(
+                'accumulated_hours_today', 0)
+            self.session_data['accumulated_hours_today'] = accumulated_hours + \
+                current_session_hours
             self.save_session_data()
-            print(f"💾 Saved {self.session_data['accumulated_hours_today']:.1f}h total for today")
+            print(
+                f"💾 Saved {self.session_data['accumulated_hours_today']:.1f}h total for today")
         except Exception as e:
             print(f"⚠️ Error saving session on shutdown: {e}")
+
+    async def _record_delayed_context(self, intervention_id: str, context: Dict):
+        """Record context after delay for feedback learning (enhanced coach only)"""
+        await asyncio.sleep(600)  # Wait 10 minutes
+        try:
+            if self.is_enhanced and hasattr(self.coach, 'record_post_intervention_context'):
+                self.coach.record_post_intervention_context(
+                    intervention_id, context)
+        except Exception:
+            print(
+                f"⚠️ Failed to record post-intervention context for {intervention_id}")
 
     async def analyze_and_coach(self, event_buffer):
         """Enhanced analysis with personalized coaching"""
@@ -318,7 +412,8 @@ class EnhancedProductionLauncher:
 
         # Only show if productivity is critically low
         if analysis['productivity_score'] < 0.15:
-            print(f"\n🚨 Critically low productivity: {analysis['productivity_score']:.0%}")
+            print(
+                f"\n🚨 Critically low productivity: {analysis['productivity_score']:.0%}")
         elif analysis['focus_quality'] < 0.2:
             print(f"\n🚨 Critically low focus: {analysis['focus_quality']:.0%}")
 
@@ -327,53 +422,90 @@ class EnhancedProductionLauncher:
             analysis['productivity_score'])
         self.session_data['focus_scores'].append(analysis['focus_quality'])
 
-        # Get personalized coaching with persona detection
-        persona = self.coach.detect_user_persona(context)
-        persona_coaching = self.coach.get_persona_specific_coaching(persona, context, analysis)
-        
-        if persona_coaching:
-            # Use persona-specific coaching from research
-            coaching_result = persona_coaching
-            if persona != 'generic':
-                print(f"🎭 Using {persona} persona coaching")
-        else:
-            # NO fallback to generic AI coaching - it generates useless alerts
+        # Initialize coaching_result
+        coaching_result = None
+
+        # Use the unified coaching system
+        try:
+            # Get coaching using the unified interface
+            coaching_result = await self.coach.analyze_telemetry(
+                analysis, user_id="default", context_history=event_buffer)
+
+            if coaching_result:
+                coach_type_display = {
+                    'enhanced_ml': 'Enhanced ML',
+                    'personalized': 'Personalized',
+                    'base': 'Base AI'
+                }.get(getattr(self, 'coach_type', 'unknown'), 'AI')
+
+                print(f"🧠 {coach_type_display} coaching: {coaching_result.get('type', coaching_result.get('nudge_type', 'unknown'))} "
+                      f"(confidence: {coaching_result.get('confidence', 0.5):.1%})")
+
+                # Record post-intervention context for learning (if supported)
+                if 'id' in coaching_result and hasattr(self.coach, 'record_post_intervention_context'):
+                    intervention_id = coaching_result['id']
+                    # Schedule context recording for feedback learning
+                    asyncio.create_task(self._record_delayed_context(
+                        intervention_id, event_buffer[-1]))
+
+        except Exception as e:
+            print(f"⚠️ AI coaching failed: {e}")
             coaching_result = None
+
+            # Final fallback to persona-specific coaching
+            try:
+                persona = self.coach.detect_user_persona(context)
+                coaching_result = self.coach.get_persona_specific_coaching(
+                    persona, context, analysis)
+
+                if coaching_result and persona != 'generic':
+                    print(f"🎭 Using {persona} persona coaching (fallback)")
+            except Exception:
+                coaching_result = None
 
         if coaching_result:
             message = coaching_result.get('message', 'No specific advice')
             priority = coaching_result.get('priority', 2)
-            reasoning = coaching_result.get('reasoning', 'Generic advice')
+            reasoning = coaching_result.get(
+                'reasoning', 'Persona-based recommendation')
             detailed_guidance = coaching_result.get('detailed_guidance', '')
             confidence = coaching_result.get('confidence', 0)
-            timing = coaching_result.get('timing', 'immediate')
-            impact_prediction = coaching_result.get('impact_prediction', '')
+            predicted_effectiveness = coaching_result.get(
+                'predicted_effectiveness', 0.5) if self.is_enhanced else None
 
-            # Show all priority messages with Nudge DNA structure
-            if priority >= 1:
+            # Only show medium+ priority messages to avoid spam
+            if priority >= 2:
                 priority_icons = {1: "🔔", 2: "💡", 3: "🚨"}
                 icon = priority_icons.get(priority, "💡")
-                
-                # Nudge DNA: Confidence badge + Expected benefit + Trigger explanation
+
+                # Nudge DNA structure
                 confidence_badge = self._get_confidence_badge(confidence)
-                expected_benefit = self._calculate_expected_benefit(message, priority)
+                expected_benefit = self._calculate_expected_benefit(
+                    message, priority)
                 trigger_explanation = self._get_trigger_explanation(reasoning)
-                
+
                 print(f"\n{icon} {message}")
-                print(f"   🎯 {confidence_badge} | ⚡ Expected benefit: {expected_benefit}")
+                print(
+                    f"   🎯 {confidence_badge} | ⚡ Expected benefit: {expected_benefit}")
                 print(f"   📋 Trigger: {trigger_explanation}")
-                
+
+                # Show ML prediction if enhanced mode
+                if self.is_enhanced and predicted_effectiveness is not None:
+                    print(
+                        f"   🧠 ML Predicted Effectiveness: {predicted_effectiveness:.1%}")
+
                 if detailed_guidance and priority >= 2:
                     print(f"   → {detailed_guidance}")
-                
+
                 # Only desktop notifications for absolute emergencies (priority 3 + very bad metrics)
-                is_emergency = (priority == 3 and 
-                              analysis.get('productivity_score', 1.0) < 0.1 and
-                              self._is_smart_timing_appropriate(priority))
-                
+                is_emergency = (priority == 3 and
+                                analysis.get('productivity_score', 1.0) < 0.1 and
+                                self._is_smart_timing_appropriate(priority))
+
                 if is_emergency:
                     notification_message = detailed_guidance if detailed_guidance else message
-                    self.show_coaching_notification(notification_message, priority)
+                    self.show_coaching_notification(
+                        notification_message, priority)
 
             # Log coaching with enhanced data
             self.log_coaching(coaching_result, analysis)
@@ -388,7 +520,7 @@ class EnhancedProductionLauncher:
         if confidence >= 0.8:
             return "High confidence"
         elif confidence >= 0.5:
-            return "Medium confidence" 
+            return "Medium confidence"
         else:
             return "Low confidence"
 
@@ -409,7 +541,7 @@ class EnhancedProductionLauncher:
         """Provide trigger explanation for transparency"""
         if not reasoning:
             return "Pattern-based recommendation"
-        
+
         # Simplify technical reasoning for user transparency
         simplified = reasoning.replace("productivity_score", "productivity")
         simplified = simplified.replace("focus_quality", "focus level")
@@ -419,26 +551,26 @@ class EnhancedProductionLauncher:
     def _is_smart_timing_appropriate(self, priority: int) -> bool:
         """Smart timing: avoid first hour, lunch, post-5pm unless urgent"""
         current_hour = datetime.now().hour
-        
+
         # Always allow urgent notifications
         if priority == 3:
             return True
-        
+
         # Avoid: first hour (8-9am), lunch (12-1pm), evening (5-6pm)
         if current_hour in [8, 12, 17]:
             return False
-        
+
         # Avoid very late/early hours
         if current_hour < 7 or current_hour > 20:
             return False
-            
+
         return True
 
     def show_coaching_notification(self, message, priority):
         """Show macOS desktop notification with multiple fallback methods"""
         try:
-            title_map = {1: "URGENT - AI Coach",
-                         2: "AI Coach Alert", 3: "AI Coach Tip"}
+            title_map = {1: "AI Coach Alert",
+                         2: "AI Coach Tip", 3: "AI Coach Notification"}
             title = title_map.get(priority, "AI Coach")
 
             # Clean message for notification - be more careful with quotes
@@ -481,14 +613,14 @@ class EnhancedProductionLauncher:
             self.daily_stats_file,
             self.session_file
         ]
-        
+
         print(f"\n📁 Log Files Status:")
         total_size = 0
         for file_path in log_files:
             if os.path.exists(file_path):
                 size_kb = os.path.getsize(file_path) / 1024
                 total_size += size_kb
-                
+
                 # Count entries if it's a JSON array
                 entry_count = "N/A"
                 try:
@@ -500,11 +632,12 @@ class EnhancedProductionLauncher:
                         entry_count = "1 object"
                 except:
                     pass
-                
-                print(f"   📄 {file_path}: {size_kb:.1f}KB, {entry_count} entries")
+
+                print(
+                    f"   📄 {file_path}: {size_kb:.1f}KB, {entry_count} entries")
             else:
                 print(f"   📄 {file_path}: Not found")
-        
+
         print(f"   💾 Total log size: {total_size:.1f}KB")
         return total_size
 
@@ -563,7 +696,38 @@ class EnhancedProductionLauncher:
 
     async def start_production_system(self):
         """Start the enhanced production system"""
-        print("🚀 WORKSMART ENHANCED AI COACH", flush=True)
+        print("🚀 WORKSMART AI COACHING SYSTEM", flush=True)
+
+        # Display system capabilities
+        if hasattr(self.coach, 'get_system_info'):
+            system_info = self.coach.get_system_info()
+            coach_type = system_info.get('coach_type', 'unknown')
+
+            if coach_type == 'enhanced_ml':
+                print(
+                    "🧠 Enhanced ML AI Coach: Machine Learning ✅ Pattern Recognition ✅ Predictive Analytics ✅", flush=True)
+                print(
+                    "🎯 UserModel ✅ Burnout Prediction ✅ Feedback Learning ✅", flush=True)
+            elif coach_type == 'personalized':
+                print(
+                    "🎭 Personalized AI Coach: Persona Detection ✅ Context Awareness ✅", flush=True)
+                print(
+                    "💡 Install pandas+scikit-learn for enhanced ML features", flush=True)
+            elif coach_type == 'base':
+                print("🤖 Base AI Coach: Rule-based Coaching ✅", flush=True)
+                print("💡 Install pandas+scikit-learn for ML features", flush=True)
+
+            # Show API status
+            api_status = "✅" if system_info.get(
+                'anthropic_api_available') else "❌"
+            print(f"🔗 Anthropic API: {api_status}", flush=True)
+
+        elif self.is_enhanced:
+            print("🧠 Enhanced ML AI Coach: Machine Learning ✅ Pattern Recognition ✅ Predictive Analytics ✅", flush=True)
+            print("🎯 UserModel ✅ Burnout Prediction ✅ Feedback Learning ✅", flush=True)
+        else:
+            print("🎭 Personalized AI Coach: Persona Detection ✅ Nudge DNA ✅", flush=True)
+            print("💡 Install pandas+scikit-learn for enhanced ML features", flush=True)
         print("="*60, flush=True)
         print(
             f"🕐 Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
@@ -573,7 +737,7 @@ class EnhancedProductionLauncher:
         print("🔗 Setting up enhanced AI coach integration...", flush=True)
 
         # Setup signal handlers
-        def signal_handler(sig, frame):
+        def signal_handler(sig, _frame):
             print(f"\n🛑 Received signal {sig} - shutting down...")
             self.save_session_data()
             self.running = False
@@ -642,6 +806,96 @@ async def main():
                 print(json.dumps(stats, indent=2))
             else:
                 print("No stats available yet")
+        elif sys.argv[1] == "insights":
+            # Show coaching insights (enhanced if available)
+            try:
+                if launcher.is_enhanced:
+                    print("\n🧠 ENHANCED ML COACHING INSIGHTS")
+                    print("="*50)
+
+                    # Get ML insights if available
+                    try:
+                        insights = launcher.coach.get_user_insights("default")
+
+                        # User model insights
+                        user_model = insights.get('user_model', {})
+                        profile = user_model.get('profile', {})
+                        if profile:
+                            print(
+                                f"🎭 Detected Persona: {profile.get('persona', 'Unknown')} (confidence: {profile.get('confidence', 0):.1%})")
+                            print(
+                                f"📊 Productivity Baseline: {profile.get('productivity_baseline', 0.5):.1%}")
+                            print(
+                                f"🎯 Focus Baseline: {profile.get('focus_baseline', 0.5):.1%}")
+
+                        # Overall performance
+                        overall = insights.get('overall_performance', {})
+                        if overall:
+                            print(f"\n🤖 ML Performance:")
+                            print(
+                                f"   Total Interventions: {overall.get('total_interventions', 0)}")
+                            print(
+                                f"   ML Confidence: {overall.get('ml_confidence', 0.5):.1%}")
+                            print(
+                                f"   Personalization Level: {overall.get('personalization_level', 0.5):.1%}")
+
+                        # Learning insights
+                        learning = insights.get('learning_performance', {})
+                        if learning and 'total_feedback_points' in learning:
+                            print(f"\n📈 Learning Status:")
+                            print(
+                                f"   Feedback Data Points: {learning['total_feedback_points']}")
+                            trend = learning.get('learning_trend', {})
+                            if trend:
+                                print(
+                                    f"   Learning Trend: {trend.get('direction', 'unknown')}")
+
+                        # Recommendations
+                        recommendations = insights.get('recommendations', [])
+                        if recommendations:
+                            print(f"\n💡 ML Recommendations:")
+                            for rec in recommendations[:3]:
+                                print(f"   • {rec}")
+
+                    except Exception as e:
+                        print(f"⚠️ ML insights unavailable: {e}")
+                else:
+                    print("\n🎭 COACHING INSIGHTS & PATTERNS")
+                    print("="*50)
+                    print(
+                        "🎯 Using PersonalizedAICoach (install pandas+scikit-learn for ML features)")
+
+                # Show session info (both modes)
+                if os.path.exists(launcher.session_file):
+                    with open(launcher.session_file, 'r') as f:
+                        session = json.load(f)
+                    print(f"\n📊 Session Data:")
+                    print(
+                        f"   Coaching Sessions Today: {session.get('coaching_count', 0)}")
+
+                # Show daily stats if available (both modes)
+                if os.path.exists(launcher.daily_stats_file):
+                    with open(launcher.daily_stats_file, 'r') as f:
+                        stats = json.load(f)
+                    print(
+                        f"   Average Productivity: {stats.get('productivity_average', 0):.1%}")
+                    print(
+                        f"   Average Focus: {stats.get('focus_average', 0):.1%}")
+                    print(
+                        f"   WorkSmart Hours: {stats.get('worksmart_hours_today', 'N/A')}")
+
+                # System status
+                if launcher.is_enhanced:
+                    print(
+                        f"\n✅ Enhanced System: PatternLearner + UserModel + PredictiveEngine + FeedbackCollector")
+                else:
+                    print(
+                        f"\n✅ Standard System: PersonalizedAICoach with Persona Detection")
+                print(
+                    "🎯 Features: Developer/Analyst/Manager patterns, Nudge DNA, Daily cleanup")
+
+            except Exception as e:
+                print(f"Failed to get insights: {e}")
         elif sys.argv[1] == "help":
             print("WorkSmart Enhanced AI Coach")
             print()
@@ -650,6 +904,8 @@ async def main():
                 "  python3 worksmart_enhanced_launcher.py        # Start enhanced system")
             print("  python3 worksmart_enhanced_launcher.py status  # Show status")
             print("  python3 worksmart_enhanced_launcher.py stats   # Show daily stats")
+            print(
+                "  python3 worksmart_enhanced_launcher.py insights # Show coaching insights")
         else:
             print(f"Unknown command: {sys.argv[1]}")
     else:
@@ -687,6 +943,31 @@ async def async_main():
                 print(json.dumps(stats, indent=2))
             else:
                 print("No stats available yet")
+        elif sys.argv[1] == "insights":
+            # Show coaching insights (async_main version - enhanced if available)
+            try:
+                if launcher.is_enhanced:
+                    print("\n🧠 ENHANCED ML COACHING INSIGHTS")
+                    insights = launcher.coach.get_user_insights("default")
+                    print(
+                        f"ML Confidence: {insights.get('overall_performance', {}).get('ml_confidence', 0.5):.1%}")
+                else:
+                    print("\n🎭 COACHING INSIGHTS & PATTERNS")
+                    print(
+                        "🎯 Using PersonalizedAICoach (install pandas+scikit-learn for ML features)")
+
+                # Show session stats
+                if os.path.exists(launcher.session_file):
+                    with open(launcher.session_file, 'r') as f:
+                        session = json.load(f)
+                    print(
+                        f"Coaching Sessions Today: {session.get('coaching_count', 0)}")
+
+                print(
+                    f"✅ {'Enhanced' if launcher.is_enhanced else 'Standard'} System Active")
+
+            except Exception as e:
+                print(f"Failed to get insights: {e}")
         elif sys.argv[1] == "help":
             print("WorkSmart Enhanced AI Coach")
             print()
@@ -694,6 +975,7 @@ async def async_main():
             print("  worksmart-enhanced        # Start enhanced system")
             print("  worksmart-enhanced status  # Show status")
             print("  worksmart-enhanced stats   # Show daily stats")
+            print("  worksmart-enhanced insights # Show coaching insights")
         else:
             print(f"Unknown command: {sys.argv[1]}")
     else:

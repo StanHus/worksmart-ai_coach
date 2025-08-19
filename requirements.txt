@@ -8,6 +8,12 @@ aiofiles>=23.0.0
 click>=8.0.0
 numpy>=1.21.0
 
+# Enhanced ML dependencies (optional - enables advanced features)
+# Install with: pip install scikit-learn pandas
+# Enables: PatternLearner, UserModel, PredictiveEngine, FeedbackCollector
+scikit-learn>=1.3.0  # For advanced ML pattern recognition
+pandas>=2.0.0        # For data analysis and insights
+
 # Optional: .NET integration
 pythonnet>=3.0.0
 
