@@ -31,7 +31,7 @@ class MicroInterventionSystem:
     def __init__(self):
         self.intervention_history = []
         self.last_intervention_time = None
-        self.intervention_cooldown_minutes = 3  # Minimum time between interventions
+        self.intervention_cooldown_minutes = 45  # Minimum time between interventions (very infrequent)
         self.flow_state_protection = True
 
     def evaluate_micro_intervention(self, context: Dict, analysis: Dict,
@@ -52,9 +52,9 @@ class MicroInterventionSystem:
 
         # Micro-intervention triggers (2-3 minute intervals)
 
-        # 1. Early tab overload detection
+        # 1. Early tab overload detection (only extreme cases)
         tab_count = self._get_tab_count(context)
-        if tab_count > 12 and session_minutes >= 2:
+        if tab_count > 30 and session_minutes >= 15:
             return self._create_micro_intervention(
                 InterventionType.MICRO_NUDGE,
                 InterventionIntensity.SUBTLE,
@@ -63,8 +63,8 @@ class MicroInterventionSystem:
                 {"suggested_action": "tab_consolidation", "tab_count": tab_count}
             )
 
-        # 2. Productivity drift detection (early warning)
-        if (productivity_score < 0.6 and session_minutes >= 2.5 and
+        # 2. Productivity drift detection (only critically low)
+        if (productivity_score < 0.2 and session_minutes >= 20 and
                 not self._is_in_flow_state(context, analysis)):
 
             return self._create_micro_intervention(
@@ -75,10 +75,10 @@ class MicroInterventionSystem:
                 {"suggested_tools": ["ChatGPT", "Grok"]}
             )
 
-        # 3. Context switch frequency warning
+        # 3. Context switch frequency warning (only excessive switching)
         app_switches = self._count_recent_app_switches(
-            context_history, minutes=3)
-        if app_switches > 4:
+            context_history, minutes=10)
+        if app_switches > 15:
             return self._create_micro_intervention(
                 InterventionType.MICRO_NUDGE,
                 InterventionIntensity.SILENT,
@@ -87,8 +87,8 @@ class MicroInterventionSystem:
                 {"app_switches": app_switches}
             )
 
-        # 4. Pre-distraction pattern detection
-        if self._detect_pre_distraction_pattern(context, context_history):
+        # 4. Pre-distraction pattern detection (disabled - too predictive)
+        if False and self._detect_pre_distraction_pattern(context, context_history):
             return self._create_micro_intervention(
                 InterventionType.GENTLE_REDIRECT,
                 InterventionIntensity.SUBTLE,
@@ -97,8 +97,8 @@ class MicroInterventionSystem:
                 {"pattern_type": "pre_distraction"}
             )
 
-        # 5. Momentum building opportunity
-        if (productivity_score > 0.7 and focus_quality > 0.7 and session_minutes < 5):
+        # 5. Momentum building opportunity (disabled - too frequent)
+        if False:
             return self._create_micro_intervention(
                 InterventionType.MICRO_NUDGE,
                 InterventionIntensity.SILENT,
@@ -107,8 +107,8 @@ class MicroInterventionSystem:
                 {"momentum_type": "early_positive"}
             )
 
-        # 6. Energy preservation for long sessions
-        if session_minutes > 45 and productivity_score > 0.8:
+        # 6. Energy preservation for very long sessions only
+        if session_minutes > 180 and productivity_score > 0.8:
             return self._create_micro_intervention(
                 InterventionType.MICRO_NUDGE,
                 InterventionIntensity.GENTLE,

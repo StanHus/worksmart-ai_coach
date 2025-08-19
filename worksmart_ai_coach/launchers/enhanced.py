@@ -74,27 +74,98 @@ class EnhancedProductionLauncher:
             try:
                 with open(self.session_file, 'r') as f:
                     data = json.load(f)
+                
+                # Check if session is from a different day
+                session_date = data.get('date', '')
+                if session_date != self.today:
+                    print(f"📅 New day detected ({session_date} → {self.today}), creating fresh session")
+                    self._cleanup_old_logs()  # Clean up old logs on new day
+                    return self._create_new_session()
+                
+                # Same day - accumulate previous session time and start fresh timer
+                if 'session_start' in data:
+                    old_start = datetime.fromisoformat(data['session_start'])
+                    previous_session_hours = (datetime.now() - old_start).total_seconds() / 3600
+                    accumulated_hours = data.get('accumulated_hours_today', 0)
+                    data['accumulated_hours_today'] = accumulated_hours + previous_session_hours
+                    data['session_start'] = datetime.now().isoformat()  # Reset timer for this restart
+                    print(f"📅 Restarted - accumulated {data['accumulated_hours_today']:.1f}h today")
+                
                 # Remove legacy fields that are now handled by WorkSmart
                 legacy_fields = ['apps_used',
                                  'total_keystrokes', 'total_mouse_events']
                 for field in legacy_fields:
                     data.pop(field, None)
-                print(f"📅 Loaded existing session data")
                 return data
             except:
                 pass
+        
+        return self._create_new_session()
 
+    def _create_new_session(self):
+        """Create a fresh session for today"""
         # Minimal session data - WorkSmart handles the rest
         session_data = {
             "date": self.today,
             "session_start": datetime.now().isoformat(),
+            "accumulated_hours_today": 0,  # Track total hours across restarts
             "coaching_count": 0,
             "last_activity": datetime.now().isoformat(),
             "productivity_scores": [],
             "focus_scores": []
         }
-        print(f"📅 Created new session data")
+        print(f"📅 Created new session data for {self.today}")
         return session_data
+
+    def _cleanup_old_logs(self):
+        """Clean up old log files to prevent accumulation"""
+        files_to_clean = [
+            self.coaching_log_file,
+            self.daily_stats_file,
+            "context_history.json"
+        ]
+        
+        cleaned_count = 0
+        for file_path in files_to_clean:
+            try:
+                if os.path.exists(file_path):
+                    # Keep only today's entries
+                    self._filter_log_to_today(file_path)
+                    cleaned_count += 1
+            except Exception as e:
+                print(f"⚠️ Warning: Could not clean {file_path}: {e}")
+        
+        if cleaned_count > 0:
+            print(f"🧹 Cleaned {cleaned_count} log files for new day")
+
+    def _filter_log_to_today(self, file_path: str):
+        """Filter log file to keep only today's entries"""
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            
+            # If it's a list of log entries
+            if isinstance(data, list):
+                today_entries = [
+                    entry for entry in data 
+                    if entry.get('date') == self.today or 
+                       (entry.get('timestamp', '').startswith(self.today))
+                ]
+                
+                with open(file_path, 'w') as f:
+                    json.dump(today_entries, f, indent=2)
+                    
+            # If it's a single object with date field, reset it if old
+            elif isinstance(data, dict) and data.get('date') != self.today:
+                # Reset the file for new day
+                os.remove(file_path)
+                
+        except Exception as e:
+            # If file is corrupted or unreadable, just remove it
+            try:
+                os.remove(file_path)
+            except:
+                pass
 
     def save_session_data(self):
         """Save minimal session data to file"""
@@ -122,11 +193,16 @@ class EnhancedProductionLauncher:
             'total_mouse_clicks', 0)
         event['worksmart_apps_count'] = 1  # Current app
 
-        # Use AI Coach session duration only for current coaching session context
+        # Use AI Coach session duration for today's total coaching time
+        # If restarted multiple times today, continue from where we left off
         start_time = datetime.fromisoformat(self.session_data['session_start'])
-        coaching_session_hours = (
-            datetime.now() - start_time).total_seconds() / 3600
-        event['coaching_session_hours'] = coaching_session_hours
+        current_session_hours = (datetime.now() - start_time).total_seconds() / 3600
+        
+        # Add any accumulated time from previous restarts today
+        accumulated_hours = self.session_data.get('accumulated_hours_today', 0)
+        total_coaching_hours_today = accumulated_hours + current_session_hours
+        
+        event['coaching_session_hours'] = total_coaching_hours_today
 
         return event
 
@@ -162,23 +238,9 @@ class EnhancedProductionLauncher:
 
                 event_buffer.append(event)
 
-                # Display current telemetry with enhanced info
-                print(
-                    f"[{datetime.now().strftime('%H:%M:%S')}] 📈 Activity captured:")
-                print(f"  App: {event['process_name']}")
-                if event.get('visiting_url'):
-                    print(f"  🌐 URL: {event['visiting_url'][:60]}...")
-                    print(f"  📄 Tab: {event['current_window']}")
-                else:
-                    print(f"  Window: {event['current_window'][:50]}...")
-                print(
-                    f"  Coaching Session: {event.get('coaching_session_hours', 0):.2f}h")
-                print(
-                    f"  WorkSmart Today: {event.get('worksmart_hours_today', '0:0')}")
-                print(
-                    f"  Activity: {event['keyboard_count']}🔤 {event['mouse_count']}🖱️")
-                print(
-                    f"  WorkSmart Total: {event.get('worksmart_total_keystrokes', 0)}🔤 | {event.get('worksmart_apps_count', 1)} apps")
+                # Display current telemetry (simplified)
+                app_name = event['process_name'][:20] if len(event['process_name']) > 20 else event['process_name']
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] {app_name} | Activity: {event['keyboard_count']}🔤 {event['mouse_count']}🖱️ | Session: {event.get('coaching_session_hours', 0):.1f}h")
 
                 # Save updated session data
                 self.save_session_data()
@@ -193,18 +255,31 @@ class EnhancedProductionLauncher:
                 await asyncio.sleep(100)
 
             except KeyboardInterrupt:
+                self._save_session_on_shutdown()
                 break
             except Exception as e:
                 print(f"❌ Monitoring error: {e}")
                 await asyncio.sleep(60)  # Wait before retrying
 
+        self._save_session_on_shutdown()
         print("🛑 AI Coach monitoring stopped")
         print(f"📊 Final session stats saved to {self.session_file}")
 
+    def _save_session_on_shutdown(self):
+        """Save accumulated time before shutdown for restarts"""
+        try:
+            start_time = datetime.fromisoformat(self.session_data['session_start'])
+            current_session_hours = (datetime.now() - start_time).total_seconds() / 3600
+            accumulated_hours = self.session_data.get('accumulated_hours_today', 0)
+            self.session_data['accumulated_hours_today'] = accumulated_hours + current_session_hours
+            self.save_session_data()
+            print(f"💾 Saved {self.session_data['accumulated_hours_today']:.1f}h total for today")
+        except Exception as e:
+            print(f"⚠️ Error saving session on shutdown: {e}")
+
     async def analyze_and_coach(self, event_buffer):
         """Enhanced analysis with personalized coaching"""
-        print(f"\n{'='*70}")
-        print("🧠 PERSONALIZED AI ANALYSIS IN PROGRESS...")
+        # Analyze silently
 
         # Analyze telemetry pattern
         analysis = self.telemetry_analyzer.analyze(event_buffer)
@@ -241,23 +316,29 @@ class EnhancedProductionLauncher:
         analysis['productivity_score'] = personal_productivity
         analysis['focus_quality'] = personal_focus
 
-        print(f"📊 PERSONALIZED Analysis Results:")
-        print(f"   Activity Level: {analysis['activity_level']}")
-        print(
-            f"   Productivity (Personal): {analysis['productivity_score']:.1%}")
-        print(f"   Focus Quality (Personal): {analysis['focus_quality']:.1%}")
-        print(f"   Current Session: {analysis['session_hours']:.2f}h")
-        print(f"   Today Total: {analysis['cumulative_session_hours']:.2f}h")
-        print(f"   Apps Used Today: {analysis['total_apps_today']}")
+        # Only show if productivity is critically low
+        if analysis['productivity_score'] < 0.15:
+            print(f"\n🚨 Critically low productivity: {analysis['productivity_score']:.0%}")
+        elif analysis['focus_quality'] < 0.2:
+            print(f"\n🚨 Critically low focus: {analysis['focus_quality']:.0%}")
 
         # Store scores for historical analysis
         self.session_data['productivity_scores'].append(
             analysis['productivity_score'])
         self.session_data['focus_scores'].append(analysis['focus_quality'])
 
-        # Get personalized coaching
-        print("🤖 Requesting PERSONALIZED AI coaching...")
-        coaching_result = await self.coach.generate_personalized_coaching(context, analysis)
+        # Get personalized coaching with persona detection
+        persona = self.coach.detect_user_persona(context)
+        persona_coaching = self.coach.get_persona_specific_coaching(persona, context, analysis)
+        
+        if persona_coaching:
+            # Use persona-specific coaching from research
+            coaching_result = persona_coaching
+            if persona != 'generic':
+                print(f"🎭 Using {persona} persona coaching")
+        else:
+            # NO fallback to generic AI coaching - it generates useless alerts
+            coaching_result = None
 
         if coaching_result:
             message = coaching_result.get('message', 'No specific advice')
@@ -268,33 +349,90 @@ class EnhancedProductionLauncher:
             timing = coaching_result.get('timing', 'immediate')
             impact_prediction = coaching_result.get('impact_prediction', '')
 
-            print(f"\n💡 ENHANCED AI COACHING:")
-            print(f"   📝 {message}")
-            if detailed_guidance:
-                print(f"   📋 {detailed_guidance}")
-            print(f"   ⚡ Priority: {priority}/3 | Confidence: {confidence:.0%}")
-            print(f"   🧠 Reasoning: {reasoning}")
-            if timing != 'immediate':
-                print(f"   ⏰ Timing: {timing}")
-            if impact_prediction:
-                print(f"   🎯 Expected Impact: {impact_prediction}")
-
-            # Show desktop notification
-            notification_message = detailed_guidance if detailed_guidance else message
-            self.show_coaching_notification(notification_message, priority)
+            # Show all priority messages with Nudge DNA structure
+            if priority >= 1:
+                priority_icons = {1: "🔔", 2: "💡", 3: "🚨"}
+                icon = priority_icons.get(priority, "💡")
+                
+                # Nudge DNA: Confidence badge + Expected benefit + Trigger explanation
+                confidence_badge = self._get_confidence_badge(confidence)
+                expected_benefit = self._calculate_expected_benefit(message, priority)
+                trigger_explanation = self._get_trigger_explanation(reasoning)
+                
+                print(f"\n{icon} {message}")
+                print(f"   🎯 {confidence_badge} | ⚡ Expected benefit: {expected_benefit}")
+                print(f"   📋 Trigger: {trigger_explanation}")
+                
+                if detailed_guidance and priority >= 2:
+                    print(f"   → {detailed_guidance}")
+                
+                # Only desktop notifications for absolute emergencies (priority 3 + very bad metrics)
+                is_emergency = (priority == 3 and 
+                              analysis.get('productivity_score', 1.0) < 0.1 and
+                              self._is_smart_timing_appropriate(priority))
+                
+                if is_emergency:
+                    notification_message = detailed_guidance if detailed_guidance else message
+                    self.show_coaching_notification(notification_message, priority)
 
             # Log coaching with enhanced data
             self.log_coaching(coaching_result, analysis)
 
             # Update coaching count
             self.session_data['coaching_count'] += 1
-        else:
-            print("ℹ️  No personalized coaching needed at this time")
-
         # Update daily stats
         self.update_daily_stats(analysis)
 
-        print("="*70 + "\n")
+    def _get_confidence_badge(self, confidence: float) -> str:
+        """Generate confidence badge for trust calibration"""
+        if confidence >= 0.8:
+            return "High confidence"
+        elif confidence >= 0.5:
+            return "Medium confidence" 
+        else:
+            return "Low confidence"
+
+    def _calculate_expected_benefit(self, message: str, priority: int) -> str:
+        """Calculate expected benefit quantified in time saved"""
+        if "break" in message.lower():
+            return "5-15 min energy recovery"
+        elif "focus" in message.lower() or "tab" in message.lower():
+            return "20-40% efficiency gain"
+        elif "stress" in message.lower():
+            return "Reduced burnout risk"
+        elif priority == 3:
+            return "Critical productivity protection"
+        else:
+            return "2-5 min improvement"
+
+    def _get_trigger_explanation(self, reasoning: str) -> str:
+        """Provide trigger explanation for transparency"""
+        if not reasoning:
+            return "Pattern-based recommendation"
+        
+        # Simplify technical reasoning for user transparency
+        simplified = reasoning.replace("productivity_score", "productivity")
+        simplified = simplified.replace("focus_quality", "focus level")
+        simplified = simplified.replace("session_minutes", "session time")
+        return simplified[:60] + "..." if len(simplified) > 60 else simplified
+
+    def _is_smart_timing_appropriate(self, priority: int) -> bool:
+        """Smart timing: avoid first hour, lunch, post-5pm unless urgent"""
+        current_hour = datetime.now().hour
+        
+        # Always allow urgent notifications
+        if priority == 3:
+            return True
+        
+        # Avoid: first hour (8-9am), lunch (12-1pm), evening (5-6pm)
+        if current_hour in [8, 12, 17]:
+            return False
+        
+        # Avoid very late/early hours
+        if current_hour < 7 or current_hour > 20:
+            return False
+            
+        return True
 
     def show_coaching_notification(self, message, priority):
         """Show macOS desktop notification with multiple fallback methods"""
@@ -314,8 +452,6 @@ class EnhancedProductionLauncher:
                 result = subprocess.run(['terminal-notifier', '-title', title, '-message', clean_message, '-sound', 'Ping'],
                                         capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
-                    print(
-                        f"   📱 Desktop notification sent via terminal-notifier: {title}")
                     return
             except (subprocess.TimeoutExpired, FileNotFoundError):
                 pass
@@ -333,26 +469,44 @@ class EnhancedProductionLauncher:
             result = subprocess.run(['osascript', '-e', script],
                                     capture_output=True, text=True, timeout=5)
 
-            if result.returncode == 0:
-                print(
-                    f"   📱 Desktop notification sent via AppleScript: {title}")
-            else:
-                print(f"   ⚠️ Notification failed: {result.stderr}")
-                # Method 3: System beep as fallback
-                subprocess.run(['osascript', '-e', 'beep'],
-                               capture_output=True)
-                print(
-                    f"   🔔 Audio notification sent (visual notification may be blocked)")
+            # Notification attempted
 
-        except Exception as e:
-            print(f"   ⚠️ Notification error: {e}")
-            # Final fallback - just beep
-            try:
-                subprocess.run(['osascript', '-e', 'beep'],
-                               capture_output=True)
-                print(f"   🔔 Audio fallback notification sent")
-            except:
-                pass
+        except Exception:
+            pass
+
+    def show_log_status(self):
+        """Show current log file status"""
+        log_files = [
+            self.coaching_log_file,
+            self.daily_stats_file,
+            self.session_file
+        ]
+        
+        print(f"\n📁 Log Files Status:")
+        total_size = 0
+        for file_path in log_files:
+            if os.path.exists(file_path):
+                size_kb = os.path.getsize(file_path) / 1024
+                total_size += size_kb
+                
+                # Count entries if it's a JSON array
+                entry_count = "N/A"
+                try:
+                    with open(file_path, 'r') as f:
+                        data = json.load(f)
+                    if isinstance(data, list):
+                        entry_count = len(data)
+                    elif isinstance(data, dict):
+                        entry_count = "1 object"
+                except:
+                    pass
+                
+                print(f"   📄 {file_path}: {size_kb:.1f}KB, {entry_count} entries")
+            else:
+                print(f"   📄 {file_path}: Not found")
+        
+        print(f"   💾 Total log size: {total_size:.1f}KB")
+        return total_size
 
     def log_coaching(self, coaching_result, analysis):
         """Log coaching to date-based file"""

@@ -21,10 +21,7 @@ class WorkSmartTelemetryCollector:
     """Collects telemetry data in WorkSmart format"""
     
     def __init__(self):
-        self.keyboard_count = 0
-        self.mouse_count = 0
-        self.scroll_count = 0
-        self.app_switches = 0
+        # Only keep essential tracking variables
         self.current_window = ""
         self.process_name = ""
         self.visiting_url = ""
@@ -34,25 +31,34 @@ class WorkSmartTelemetryCollector:
         # Use WorkSmart data as primary source (READ-ONLY)
         from .worksmart_reader import WorkSmartDataReader
         self.worksmart_reader = WorkSmartDataReader()
-        print("✅ Using WorkSmart telemetry as primary data source")
+        print("✅ Using WorkSmart telemetry as READ-ONLY data source")
     
     def _setup_hooks(self):
         """No longer needed - using WorkSmart data instead"""
         pass
     
     def collect_event(self) -> Dict:
-        """Collect telemetry event using WorkSmart data (READ-ONLY)"""
+        """Collect telemetry event using WorkSmart data (STRICTLY READ-ONLY)
         
-        # Get latest WorkSmart activity data  
+        This method ONLY reads WorkSmart's official telemetry data without any modifications,
+        accumulations, or transformations. All data comes directly from WorkSmart logs.
+        """
+        
+        # Get latest WorkSmart activity data (READ-ONLY access to logs)
         recent_activities = self.worksmart_reader.get_recent_activity_from_logs(hours=1)
         worksmart_stats = self.worksmart_reader.get_current_session_stats()
         
-        # Use most recent WorkSmart activity if available
+        # Use WorkSmart data exactly as reported (NO modifications)
+        keyboard_count = 0
+        mouse_count = 0
+        scroll_count = 0
+        
         if recent_activities:
+            # Use the most recent WorkSmart activity data exactly as reported
             latest = recent_activities[-1]
-            self.keyboard_count = latest.get('keystrokes', 0)
-            self.mouse_count = latest.get('mouse_clicks', 0)
-            self.scroll_count = latest.get('scroll_counts', 0)
+            keyboard_count = latest.get('keystrokes', 0)
+            mouse_count = latest.get('mouse_clicks', 0)
+            scroll_count = latest.get('scroll_counts', 0)
             self.last_activity = datetime.fromisoformat(latest['timestamp'])
         
         # Get current window/app info and Chrome tab details
@@ -88,8 +94,8 @@ class WorkSmartTelemetryCollector:
         event = {
             "type": "ACTIVITY",
             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "keyboard_count": self.keyboard_count,
-            "mouse_count": self.mouse_count + self.scroll_count,
+            "keyboard_count": keyboard_count,
+            "mouse_count": mouse_count,
             "current_window": self.current_window,
             "process_name": self.process_name,
             "visiting_url": self.visiting_url if "Chrome" in self.process_name or "browser" in self.process_name.lower() else "",
@@ -104,13 +110,10 @@ class WorkSmartTelemetryCollector:
             "worksmart_user_id": worksmart_stats.get('user_id'),
             "worksmart_team_id": worksmart_stats.get('team_id'),
             "worksmart_data_files": worksmart_stats.get('data_files', 0),
-            "data_source": "WorkSmart Official + AI Coach Context"
+            "data_source": "WorkSmart Official (READ-ONLY)"
         }
         
-        # Reset counts after collection (like WorkSmart does)
-        self.keyboard_count = 0
-        self.mouse_count = 0
-        self.scroll_count = 0
+        # No modifications needed - using WorkSmart data as-is
         
         return event
     

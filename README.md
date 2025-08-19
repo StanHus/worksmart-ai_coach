@@ -140,20 +140,3 @@ build_dmg.sh       # Builds self-sustained DMG
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file.
-
-## 🆘 Support
-
-- [Issues](https://github.com/StanHus/worksmart-ai_coach/issues)
-- [Discussions](https://github.com/StanHus/worksmart-ai_coach/discussions)
-
----
-
-## 🎉 Perfect For
-
-- **Users without Python installed**
-- **Corporate environments with restrictions**
-- **Easy deployment and distribution**
-- **Professional productivity coaching**
-- **Anyone wanting zero-setup productivity tools**
-
-**Ready to supercharge your productivity? Download the DMG and run!** 🚀

@@ -31,6 +31,43 @@ class PersonalizedAICoach(AICoach):
         self.worksmart_reader = WorkSmartDataReader()
         # Enhanced coaching functionality integrated directly
         
+        # Persona-based coaching patterns from research
+        self.persona_patterns = {
+            'analyst': {
+                'confidence_threshold': 0.488,
+                'interval_minutes': 62,
+                'wants_more_coaching': True,
+                'preferred_language': 'specific_shortcuts',
+                'example_nudges': [
+                    "XLOOKUP prevents #N/A errors - try =XLOOKUP(lookup, array, return) instead of VLOOKUP",
+                    "Pivot table shortcut: Alt+N+V for instant analysis",
+                    "CTRL+SHIFT+L adds filters instantly - saves 3 clicks per dataset"
+                ]
+            },
+            'developer': {
+                'confidence_threshold': 0.831,
+                'interval_minutes': 63,
+                'wants_flow_protection': True,
+                'preferred_language': 'flow_protection',
+                'example_nudges': [
+                    "Deep focus detected - muting notifications to protect your flow state",
+                    "Code complexity rising - consider breaking this into smaller functions",
+                    "You're in the zone! This focus session has 23 minutes of protected time remaining"
+                ]
+            },
+            'manager': {
+                'confidence_threshold': 0.650,
+                'interval_minutes': 74,
+                'avoid_times': [8, 17, 18],  # 8am, 5-6pm
+                'preferred_language': 'consultative',
+                'example_nudges': [
+                    "I notice your calendar density is increasing. Consider protecting 2-hour focus blocks",
+                    "Your team productivity metrics show 15% improvement this week - great leadership impact",
+                    "Meeting overload detected. Research suggests batching meetings improves decision quality by 25%"
+                ]
+            }
+        }
+        
         # Track current intervention for follow-up
         self.current_intervention_id = None
         self.intervention_timestamp = None
@@ -128,35 +165,35 @@ class PersonalizedAICoach(AICoach):
         meeting_context = self._detect_meeting_context(context)
         social_browsing = self._detect_social_browsing(context)
         
-        print(f"🔍 Personal scoring: base={base_score:.2f}, ai_tools={ai_tools_active}, tabs={tab_count}")
+        # Personal scoring: base score with ai_tools and tabs consideration
         
         # Apply personal correlations
         if ai_tools_active and tab_count <= self.personal_patterns['optimal_tab_count']:
             score = min(1.0, base_score * 1.3)  # 30% boost for AI tools + focused tabs
-            print(f"   ✅ AI tools + focused tabs boost: {score:.2f}")
+            # AI tools + focused tabs boost applied
             return score
         
         if meeting_context:
             score = min(1.0, base_score * 1.2)  # 20% boost for meetings
-            print(f"   📞 Meeting context boost: {score:.2f}")
+            # Meeting context boost applied
             return score
         
         if tab_count > self.personal_patterns['tab_overload_threshold']:
             score = max(0.3, base_score * 0.7)  # 30% penalty for tab overload
-            print(f"   ⚠️ Tab overload penalty: {score:.2f}")
+            # Tab overload penalty applied
             return score
         
         if social_browsing:
             score = max(0.2, base_score * 0.6)  # 40% penalty for social media
-            print(f"   📱 Social browsing penalty: {score:.2f}")
+            # Social browsing penalty applied
             return score
         
         if file_activity:
             score = min(1.0, base_score * 1.1)  # 10% boost for file activity
-            print(f"   📁 File activity boost: {score:.2f}")
+            # File activity boost applied
             return score
         
-        print(f"   📊 Base score unchanged: {base_score:.2f}")
+        # Base score unchanged
         return base_score
     
     def calculate_personalized_focus_quality(self, events: List[Dict], context: Dict) -> float:
@@ -164,31 +201,31 @@ class PersonalizedAICoach(AICoach):
         unique_apps = len(set(e.get('process_name', '') for e in events))
         tab_count = self._get_tab_count(context)
         
-        print(f"🎯 Personal focus: apps={unique_apps}, tabs={tab_count}")
+        # Personal focus: analyzing apps and tabs
         
         # Personal focus patterns
         if self._detect_ai_flow_state(context):
-            print(f"   🤖 AI flow state detected: 0.95")
+            # AI flow state detected
             return 0.95  # Maximum focus during AI engagement
         
         if self._detect_meeting_excellence(context):
-            print(f"   📞 Meeting excellence detected: 0.90")
+            # Meeting excellence detected
             return 0.9  # High focus during meetings
         
         # Tab-aware focus calculation
         if unique_apps <= 2 and tab_count <= self.personal_patterns['optimal_tab_count']:
             score = 0.85
-            print(f"   ✅ Good focus with reasonable tabs: {score}")
+            # Good focus with reasonable tabs
             return score
         
         if tab_count > self.personal_patterns['tab_overload_threshold'] + 2:
             score = max(0.3, 0.8 - (tab_count * 0.03))
-            print(f"   ⚠️ Tab overload focus penalty: {score}")
+            # Tab overload focus penalty
             return score
         
         # Default calculation with personal adjustments
         base_focus = max(0.3, 1.0 - (unique_apps * 0.12))
-        print(f"   📊 Base focus calculation: {base_focus}")
+        # Base focus calculation (silent)
         return base_focus
     
     def should_intervene_personalized(self, current_state: str, duration_minutes: float, context: Dict) -> Tuple[bool, str, str]:
@@ -292,7 +329,7 @@ class PersonalizedAICoach(AICoach):
         # Get predictive analysis
         prediction = self.context_tracker.predict_next_optimal_action()
         
-        print(f"🤖 Advanced analysis: meeting_momentum={post_meeting_momentum}, focus_improvement={focus_improvement}, ai_recovery={ai_recovery}")
+        # Advanced analysis (silent)
         if prediction:
             print(f"🔮 Prediction: {prediction['prediction_type']} (confidence: {prediction['confidence']:.2f})")
         
@@ -401,7 +438,7 @@ class PersonalizedAICoach(AICoach):
         time_context = self._get_time_context()
         work_mode = self._detect_work_mode(context, analysis)
         
-        print(f"🚀 Enhanced coaching analysis: {current_app} | energy={energy_level} | time={time_context} | mode={work_mode}")
+        # Enhanced coaching analysis (silent)
         
         # Generate enhanced coaching based on rich context
         enhanced_coaching = self._generate_enhanced_coaching_message(
@@ -425,7 +462,7 @@ class PersonalizedAICoach(AICoach):
             current_state, duration_minutes, context
         )
         
-        print(f"🤖 Standard coaching: state={current_state}, intervene={should_intervene}, reason={reason}")
+        # Standard coaching evaluation (silent)
         
         if not should_intervene:
             # Save context history before returning
@@ -818,6 +855,128 @@ class PersonalizedAICoach(AICoach):
         """Get Chrome tab count from context"""
         chrome_context = context.get('chrome_context', {})
         return chrome_context.get('total_tabs', 0)
+    
+    def detect_user_persona(self, context: Dict) -> str:
+        """Detect user persona based on application usage and behavior patterns"""
+        current_app = context.get('current_application', '').lower()
+        chrome_url = context.get('chrome_context', {}).get('active_tab_url', '').lower()
+        window_title = context.get('current_window', '').lower()
+        
+        # Developer indicators
+        dev_apps = ['terminal', 'code', 'xcode', 'intellij', 'pycharm', 'vscode', 'cursor', 'vim', 'emacs']
+        dev_sites = ['github', 'stackoverflow', 'gitlab', 'bitbucket', 'codepen', 'repl.it']
+        
+        if any(app in current_app for app in dev_apps) or any(site in chrome_url for site in dev_sites):
+            return 'developer'
+        
+        # Analyst indicators  
+        analyst_apps = ['excel', 'sheets', 'tableau', 'powerbi', 'numbers', 'stata', 'spss']
+        analyst_keywords = ['dashboard', 'report', 'analysis', 'data', 'chart', 'pivot']
+        
+        if (any(app in current_app for app in analyst_apps) or 
+            any(keyword in window_title for keyword in analyst_keywords)):
+            return 'analyst'
+        
+        # Manager indicators
+        manager_apps = ['calendar', 'outlook', 'teams', 'slack', 'zoom', 'notion', 'asana', 'monday']
+        manager_keywords = ['meeting', 'schedule', 'team', 'project', 'management', 'review']
+        
+        if (any(app in current_app for app in manager_apps) or
+            any(keyword in window_title for keyword in manager_keywords)):
+            return 'manager'
+        
+        return 'generic'  # Default persona
+    
+    def get_persona_specific_coaching(self, persona: str, context: Dict, analysis: Dict) -> Optional[Dict]:
+        """Generate persona-specific coaching messages based on research patterns"""
+        if persona not in self.persona_patterns:
+            return None
+        
+        persona_config = self.persona_patterns[persona]
+        
+        # Check persona-specific timing preferences
+        current_hour = datetime.now().hour
+        if 'avoid_times' in persona_config and current_hour in persona_config['avoid_times']:
+            return None
+        
+        # Apply much stricter persona-specific thresholds
+        productivity = analysis.get('productivity_score', 0.5)
+        
+        # Only intervene if productivity is VERY low (much stricter than research thresholds)
+        strict_threshold = persona_config['confidence_threshold'] * 0.5  # 50% of research threshold
+        if productivity > strict_threshold:
+            return None  # Don't intervene unless critically low
+        
+        # Get persona-appropriate message based on current situation
+        tab_count = self._get_tab_count(context)
+        productivity = analysis.get('productivity_score', 0.5)
+        focus = analysis.get('focus_quality', 0.5)
+        
+        if persona == 'developer':
+            return self._get_developer_coaching(context, analysis, tab_count, focus)
+        elif persona == 'analyst':  
+            return self._get_analyst_coaching(context, analysis, productivity)
+        elif persona == 'manager':
+            return self._get_manager_coaching(context, analysis)
+        
+        return None
+    
+    def _get_developer_coaching(self, context: Dict, analysis: Dict, tab_count: int, focus: float) -> Optional[Dict]:
+        """Developer-specific coaching - ONLY for specific, actionable problems"""
+        
+        # ONLY intervene for extreme tab overload (actionable problem)
+        if tab_count > 20:
+            return {
+                'message': f"You have {tab_count} tabs open - this is slowing down your browser and making debugging harder. Close tabs you're not actively using?",
+                'nudge_type': 'focus_boost', 
+                'confidence': 0.9,
+                'priority': 2,
+                'reasoning': f"Extreme tab overload ({tab_count} tabs) affecting performance",
+                'detailed_guidance': f"Chrome uses ~50MB per tab. With {tab_count} tabs, that's ~{tab_count * 50}MB of RAM just for tabs.",
+                'persona': 'developer'
+            }
+        
+        # NO generic "low productivity" or "mild focus" alerts - they're useless
+        return None
+    
+    def _get_analyst_coaching(self, context: Dict, analysis: Dict, productivity: float) -> Optional[Dict]:
+        """Analyst-specific coaching - ONLY when actually in spreadsheet doing repetitive work"""
+        current_app = context.get('current_application', '').lower()
+        window_title = context.get('current_window', '').lower()
+        
+        # ONLY if actually in Excel/Sheets and doing something that could be improved
+        if ('excel' in current_app or 'sheets' in current_app) and ('vlookup' in window_title or 'lookup' in window_title):
+            return {
+                'message': "I see you're using VLOOKUP - XLOOKUP prevents #N/A errors and is more reliable",
+                'nudge_type': 'productivity_tip',
+                'confidence': 0.8,
+                'priority': 1,
+                'reasoning': "Detected VLOOKUP usage - XLOOKUP suggestion",
+                'detailed_guidance': "XLOOKUP syntax: =XLOOKUP(lookup_value, lookup_array, return_array)",
+                'persona': 'analyst'
+            }
+        
+        # NO generic productivity tips
+        return None
+    
+    def _get_manager_coaching(self, context: Dict, analysis: Dict) -> Optional[Dict]:
+        """Manager-specific coaching - ONLY for extreme context switching"""
+        
+        # Only intervene if extreme context switching (actually measurable problem)
+        switches_per_hour = context.get('window_count', 0) 
+        if switches_per_hour > 30:  # More than 30 app switches per hour
+            return {
+                'message': f"You switched between {switches_per_hour} different contexts in the last hour. This level of fragmentation makes deep thinking nearly impossible.",
+                'nudge_type': 'focus_boost',
+                'confidence': 0.9,
+                'priority': 2,
+                'reasoning': f"Extreme context switching ({switches_per_hour}/hour) detected",
+                'detailed_guidance': "Consider batching similar tasks or setting 30-minute focused blocks",
+                'persona': 'manager'
+            }
+        
+        # NO vague "attention fragmenting" alerts
+        return None
     
     def _calculate_base_activity_score(self, events: List[Dict]) -> float:
         """Calculate base activity score from events"""
