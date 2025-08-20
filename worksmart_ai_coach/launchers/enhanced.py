@@ -488,11 +488,18 @@ class EnhancedProductionLauncher:
                     'base': 'Base AI'
                 }.get(getattr(self, 'coach_type', 'unknown'), 'AI')
 
+                # Check confidence threshold before delivering notification
+                confidence = coaching_result.get('meta', {}).get('confidence', coaching_result.get('confidence', 0.5))
+                min_confidence_threshold = 0.75  # Increase from default to reduce low-confidence notifications
+                
                 print(f"🧠 {coach_type_display} coaching: {coaching_result.get('type', coaching_result.get('nudge_type', 'unknown'))} "
-                      f"(confidence: {coaching_result.get('confidence', 0.5):.1%})")
+                      f"(confidence: {confidence:.1%})")
 
-                # CRITICAL: Deliver the notification!
-                self.coach._deliver_notification(coaching_result)
+                # CRITICAL: Only deliver notification if confidence is high enough!
+                if confidence >= min_confidence_threshold:
+                    self.coach._deliver_notification(coaching_result)
+                else:
+                    print(f"[DEBUG] 🚫 Skipping notification due to low confidence: {confidence:.1%} < {min_confidence_threshold:.1%}", flush=True)
                 
                 # Record post-intervention context for learning (if supported)
                 if 'id' in coaching_result and hasattr(self.coach, 'record_post_intervention_context'):

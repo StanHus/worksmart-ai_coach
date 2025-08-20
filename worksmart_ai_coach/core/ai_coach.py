@@ -1101,9 +1101,9 @@ class AICoach:
                     5, self.notification_config['per_type_cooldown_minutes'][key] * 0.7)
 
         else:  # balanced (default)
-            # BALANCED (3-4 per hour) - Regular helpful coaching
-            self.notification_config['max_per_hour'] = 4
-            self.notification_config['min_minutes_between'] = 12
+            # BALANCED (2-3 per hour) - Regular helpful coaching
+            self.notification_config['max_per_hour'] = 3  # Reduced from 4
+            self.notification_config['min_minutes_between'] = 15  # Increased from 12
             # Keep default cooldown times
 
         logger.info(f"✅ Notification frequency set to {frequency} mode")
@@ -1526,7 +1526,17 @@ Be very conservative - when in doubt, choose NO."""
             productivity_score = current.get('productivity_score', 0.0)
             current_app = current.get('current_app', 'unknown')
             
-            print(f"[DEBUG] 📈 Basic coaching check - productivity: {productivity_score:.2f}, app: {current_app}", flush=True)
+            # Get actual activity levels to avoid false alarms
+            total_keystrokes = current.get('total_keystrokes', 0)
+            total_mouse_clicks = current.get('total_mouse_clicks', 0) 
+            total_activity = total_keystrokes + total_mouse_clicks
+            
+            print(f"[DEBUG] 📈 Basic coaching check - productivity: {productivity_score:.2f}, app: {current_app}, activity: {total_activity}", flush=True)
+            
+            # Don't trigger low productivity if user has high activity (130+ keystrokes/clicks in recent window)
+            if total_activity >= 100:
+                print(f"[DEBUG] 🚫 Skipping low productivity alert - high activity detected: {total_activity}", flush=True)
+                return None
             
             # Basic productivity coaching with higher thresholds for high-performance users
             if productivity_score < 0.15:  # Only trigger on extremely low productivity
@@ -1538,7 +1548,7 @@ Be very conservative - when in doubt, choose NO."""
                     "urgency": "medium",
                     "persona": self._get_user_profile(user_id).persona,
                     "channel": "terminal_notifier",
-                    "meta": {"source": "basic_fallback", "reasoning": f"Very low productivity: {productivity_score:.2f}", "confidence": 0.7}
+                    "meta": {"source": "basic_fallback", "reasoning": f"Very low productivity: {productivity_score:.2f}", "confidence": 0.8}
                 }
             elif productivity_score < 0.25:  # Reduced from 0.5
                 return {
@@ -1549,7 +1559,7 @@ Be very conservative - when in doubt, choose NO."""
                     "urgency": "low", 
                     "persona": self._get_user_profile(user_id).persona,
                     "channel": "terminal_notifier",
-                    "meta": {"source": "basic_fallback", "reasoning": f"Moderate productivity: {productivity_score:.2f}", "confidence": 0.6}
+                    "meta": {"source": "basic_fallback", "reasoning": f"Moderate productivity: {productivity_score:.2f}", "confidence": 0.7}
                 }
             else:
                 # High productivity - encourage or suggest break
