@@ -1,142 +1,210 @@
-# WorkSmart AI Coach 🤖
+# WorkSmart AI Coach
 
-Based on https://github.com/trilogy-group/aicoe-ai_coach/blob/master/ai_coach.py
+## Overview
 
-**Self-Sustained AI-Powered Productivity Coaching**
+Production-ready AI productivity coaching system with real-time telemetry analysis. Features 3-pass Claude AI integration, intelligent session detection, and configurable desktop notifications. Self-contained DMG distribution with embedded Python runtime.
 
-NO Python installation required! Complete productivity coaching system that works out-of-the-box on any macOS system.
+## Architecture
 
-## 🎯 For Users (Zero Setup Required)
+### Core Components
 
-### 📦 Download & Run
+- **AI Coach Engine** (`core/ai_coach.py`): 4,400+ line consolidated coaching system with persona detection, pattern analysis, and intervention generation
+- **Enhanced Launcher** (`launchers/enhanced.py`): Production monitoring loop with telemetry collection and coaching orchestration  
+- **WorkSmart Bridge** (`bridge/worksmart_reader.py`): CrossOver telemetry data ingestion and analysis
+- **Telemetry System** (`core/telemetry.py`): Event collection, storage, and analytics pipeline
 
-1. **Download:** `WorkSmart-AI-Coach.dmg`
-2. **Mount:** Double-click the DMG file
-3. **Install:** Drag "WorkSmart AI Coach" to Applications
-4. **Launch:** Double-click "🚀 Launch WorkSmart AI Coach.command"
-5. **Done!** Follow the setup prompts - that's it!
+### System Capabilities
 
-### ✨ What You Get
+- **3-Pass AI Analysis**: Historical context + current activity + synthesis for comprehensive coaching
+- **Smart Session Detection**: Flexible WorkSmart integration with fallback mechanisms
+- **Rate Limiting**: Configurable notification frequency (gentle/balanced/active)
+- **Multi-Channel Notifications**: terminal-notifier, AppleScript dialogs, console fallbacks
+- **Production Ready**: Clean logging, error handling, self-contained distribution
 
-- **Real-time productivity monitoring**
-- **AI-powered coaching suggestions**
-- **Activity pattern analysis**
-- **Desktop notifications**
-- **Session tracking and statistics**
-- **Complete self-contained app** (NO Python needed!)
+## Installation
 
-### 🔧 First Launch Setup
-
-The app will prompt you for:
-
-- **CrossOver files path** (default: ~/crossoverFiles)
-- **Anthropic API key** (optional - get free key at https://console.anthropic.com)
-
-Settings saved to `~/.worksmart-ai-coach/.env` - edit anytime to update.
-
-## 🚀 What It Does
-
-1. **Monitors** your computer activity (apps, windows, productivity patterns)
-2. **Analyzes** focus levels and work habits
-3. **Provides** real-time coaching suggestions via desktop notifications
-4. **Tracks** daily statistics and progress
-5. **Learns** from your behavior to improve recommendations
-
-## 📊 Example Output
-
-```
-🚀 WorkSmart AI Coach (Self-Sustained)
-======================================
-✨ NO Python installation required!
-
-🔧 WorkSmart AI Coach Setup
-============================
-
-📁 CrossOver Files Path
-Enter path (default: ~/crossoverFiles):
-
-🔑 Anthropic API Key
-Get free API key: https://console.anthropic.com
-1. Enter API key now
-2. Skip (basic mode)
-
-Choose (1/2): 1
-🔐 API Key (hidden):
-✅ API key saved!
-
-🎯 Starting AI Coach...
-
-🚀 WORKSMART ENHANCED AI COACH
-============================================================
-🕐 Started at: 2025-08-18 21:48:02
-📅 Session date: 2025-08-18
-
-[21:48:04] 📈 Activity captured:
-  App: Terminal
-  Window: WorkSmart AI Coach
-  Coaching Session: 0.00h
-  WorkSmart Today: 11:0
-  Activity: 24🔤 30🖱️
-```
-
-## 🔒 Privacy & Security
-
-- **All data stays on your Mac** - nothing sent to external servers
-- **API key only used for AI suggestions** - stored locally
-- **Session files stored locally** in ~/.worksmart-ai-coach/data/
-- **No system modifications** - completely self-contained
-
-## 📋 System Requirements
-
-- **macOS 10.12+** (High Sierra or later)
-- **19MB disk space** for the app
-- **No Python installation required!**
-- **No external dependencies!**
-
-## 🛠️ For Developers
-
-### Building from Source
+### End User (DMG Distribution)
 
 ```bash
-# Clone repository
+# Download and mount DMG
+curl -LO https://example.com/WorkSmart-AI-Coach.dmg
+open WorkSmart-AI-Coach.dmg
+
+# Launch self-contained application
+/Applications/WorkSmart\ AI\ Coach/Launch\ WorkSmart\ AI\ Coach.command
+```
+
+### Developer Setup
+
+```bash
+# Clone and install dependencies
 git clone https://github.com/StanHus/worksmart-ai_coach.git
 cd worksmart-ai_coach
+pip install -e . --user
 
-# Build self-sustained DMG (requires Python 3.8+ to build)
+# Run development instance
+python3 -m worksmart_ai_coach.launchers.enhanced
+
+# Build production DMG
 ./build_dmg.sh
 ```
 
-This creates `WorkSmart-AI-Coach.dmg` with embedded Python runtime.
+## Configuration
 
-### Development Setup
+### Environment Variables
 
 ```bash
-# For development (requires Python)
-python3 -m worksmart_ai_coach.launchers.enhanced
-
-# Install in development mode
-pip install -e . --user
+# ~/.worksmart-ai-coach/.env
+CROSSOVER_FILES_PATH=~/crossoverFiles
+ANTHROPIC_API_KEY=sk-ant-...
+NOTIFICATION_FREQUENCY=gentle  # gentle|balanced|active
+DEBUG=false
 ```
 
-### Project Structure
+### Notification Frequency Settings
+
+- **gentle**: 2/hour, 25min intervals, minimal interruption (default)
+- **balanced**: 4/hour, 12min intervals, regular coaching
+- **active**: 6/hour, 8min intervals, frequent guidance
+
+## Technical Implementation
+
+### 3-Pass AI Coaching Pipeline
+
+```python
+# Pass 1: Historical Analysis (7-day context)
+historical_analysis = claude_analyze_history(user_data, current_context)
+
+# Pass 2: Current Activity Analysis
+current_analysis = claude_analyze_current_activity(telemetry_data)
+
+# Pass 3: Synthesis & Decision
+final_coaching = claude_synthesize_and_decide(historical_analysis, current_analysis)
+```
+
+### Telemetry Data Flow
+
+1. **Collection**: Enhanced launcher polls CrossOver logs every 60s
+2. **Processing**: Event buffer analysis every 3 events (5-6min intervals)
+3. **Storage**: Persistent session data in ~/.worksmart-ai-coach/data/
+4. **Analysis**: Productivity scoring, focus detection, pattern matching
+
+### Notification Delivery
+
+```python
+# Multi-channel notification system
+channels = {
+    'terminal_notifier': subprocess_call_with_sound,
+    'system_banner': applescript_dialog_for_critical,
+    'console': fallback_logging
+}
+```
+
+## Development
+
+### Key Files
 
 ```
 worksmart_ai_coach/
-├── cli/           # Command-line interface
-├── core/          # AI coaching logic
-├── bridge/        # WorkSmart integration
-└── launchers/     # Application launchers
+├── core/
+│   ├── ai_coach.py          # Main coaching engine (4,400+ lines)
+│   ├── telemetry.py         # Event collection and storage
+│   └── detectors/           # Pattern detection modules
+├── launchers/
+│   └── enhanced.py          # Production monitoring loop
+├── bridge/
+│   └── worksmart_reader.py  # CrossOver integration
+└── cli/
+    └── main.py              # Command-line interface
 
-build_dmg.sh       # Builds self-sustained DMG
+build_dmg.sh                 # Self-contained DMG builder
 ```
 
-## 🔍 Troubleshooting
+### Build Process
 
-**App won't launch**: Check that you're running macOS 10.12+  
-**No AI features**: Add your Anthropic API key during setup  
-**Permission issues**: Grant accessibility permissions in System Preferences  
-**WorkSmart integration**: Set correct CrossOver files path during setup
+```bash
+# Creates embedded Python runtime DMG
+./build_dmg.sh
 
-## 📄 License
+# Output: WorkSmart-AI-Coach.dmg (19MB self-contained app)
+# Includes: Python 3.x runtime, all dependencies, launcher scripts
+```
 
-MIT License - see [LICENSE](LICENSE) file.
+### Debug Mode
+
+```bash
+# Enable comprehensive logging
+export DEBUG=true
+python3 -m worksmart_ai_coach.launchers.enhanced
+
+# Log output includes:
+# - Event buffer status
+# - Productivity calculations  
+# - Detector flag analysis
+# - Notification delivery results
+```
+
+## API Integration
+
+### Anthropic Claude
+
+```python
+# AI-generated coaching with context awareness
+client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+response = client.messages.create(
+    model="claude-3-haiku-20240307",
+    max_tokens=150,
+    messages=[{"role": "user", "content": coaching_prompt}]
+)
+```
+
+### WorkSmart Telemetry
+
+```python
+# Real-time session statistics
+stats = {
+    'total_hours_today': '4:30',
+    'productivity_score': 0.67,
+    'focus_score': 0.54,
+    'session_active': True
+}
+```
+
+## System Requirements
+
+- **macOS 10.12+** (High Sierra or later)
+- **Python 3.8+** (for development, embedded in DMG)
+- **terminal-notifier** (bundled with DMG)
+- **CrossOver WorkSmart** (for telemetry data source)
+
+## Troubleshooting
+
+### Common Issues
+
+```bash
+# Notification delivery failures
+[DEBUG] 📱 Terminal-notifier result: returncode=1
+# Solution: Check terminal-notifier installation
+
+# Rate limiting blocking notifications
+[DEBUG] 🚫 Rate limited - skipping coaching
+# Solution: Adjust NOTIFICATION_FREQUENCY in .env
+
+# Missing telemetry data
+[DEBUG] 📚 History digests built: 7d=0, 30d=0
+# Solution: Verify CROSSOVER_FILES_PATH configuration
+```
+
+### Performance Monitoring
+
+```bash
+# Session statistics
+coaching_count: 12
+accumulated_hours_today: 5.5
+productivity_scores: [0.67, 0.54, 0.72, ...]
+focus_scores: [0.82, 0.66, 0.54, ...]
+```
+
+## License
+
+MIT License - Production-ready system for CrossOver productivity monitoring.

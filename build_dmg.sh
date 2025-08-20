@@ -67,6 +67,20 @@ def setup_config():
         if api_key:
             print("✅ API key saved!")
     
+    # Notification Frequency
+    print("\n🔔 Coaching Notification Frequency")
+    print("Choose how often you want productivity suggestions:")
+    print("1. 🟢 GENTLE (1-2 per hour) - Minimal, key insights only")
+    print("2. 🟡 BALANCED (3-4 per hour) - Regular helpful coaching")  
+    print("3. 🔴 ACTIVE (5-6 per hour) - Frequent guidance & alerts")
+    
+    freq_choice = input("\nChoose frequency (1/2/3): ").strip()
+    notification_mode = {
+        "1": "gentle",
+        "2": "balanced", 
+        "3": "active"
+    }.get(freq_choice, "balanced")
+    
     # Save config
     with open(env_file, 'w') as f:
         f.write("# WorkSmart AI Coach Configuration\n")
@@ -75,6 +89,7 @@ def setup_config():
             f.write(f"ANTHROPIC_API_KEY={api_key}\n")
         else:
             f.write("# ANTHROPIC_API_KEY=your_key_here\n")
+        f.write(f"NOTIFICATION_FREQUENCY={notification_mode}\n")
         f.write("\n# DEBUG=true\n")
     
     print(f"\n✅ Config saved: {env_file}\n")
@@ -145,11 +160,17 @@ python3 -m PyInstaller \
     --hidden-import worksmart_ai_coach.core.personalized_coach \
     --hidden-import worksmart_ai_coach.core.telemetry \
     --hidden-import worksmart_ai_coach.core.worksmart_reader \
+    --hidden-import worksmart_ai_coach.core.ai_coach \
     --hidden-import worksmart_ai_coach.launchers.enhanced \
     --hidden-import anthropic \
     --hidden-import pynput \
     --hidden-import psutil \
     --hidden-import numpy \
+    --hidden-import sqlite3 \
+    --hidden-import _sqlite3 \
+    --hidden-import datetime \
+    --hidden-import asyncio \
+    --hidden-import subprocess \
     --add-data "worksmart_ai_coach:worksmart_ai_coach" \
     --console \
     --clean \

@@ -294,16 +294,58 @@ class EnhancedProductionLauncher:
 
     async def monitor_loop(self):
         """Enhanced monitoring loop with persistent tracking"""
-        print("🤖 Enhanced AI Coach monitoring started", flush=True)
-        print(f"📊 Date: {self.today}", flush=True)
-        print(
-            f"📈 Session started at: {self.session_data['session_start'][:16]}", flush=True)
-        print(
-            f"💾 Data files: {self.session_file}, {self.coaching_log_file}", flush=True)
-        print("⌨️  Press Ctrl+C to stop\n", flush=True)
+        print("🤖 Enhanced AI Coach monitoring started")
+        print(f"📊 Date: {self.today}")
+        print(f"📈 Session started at: {self.session_data['session_start'][:16]}")
+        print(f"💾 Data files: {self.session_file}, {self.coaching_log_file}")
+        print("⌨️  Press Ctrl+C to stop\n")
+
+        # Send informative startup notifications
+        import subprocess
+        
+        # Calculate session info
+        worksmart_hours = self.session_data.get('accumulated_hours_today', 0)
+        coaching_count = self.session_data.get('coaching_count', 0)
+        notification_mode = os.getenv('NOTIFICATION_FREQUENCY', 'gentle').title()
+        current_time = datetime.now().strftime("%-I:%M %p")
+        
+        try:
+            # First notification: Session status
+            session_msg = f"Session started at {current_time}. You've worked {worksmart_hours:.1f}h today with {coaching_count} coaching sessions. Notification mode: {notification_mode}"
+            result = subprocess.run(['terminal-notifier',
+                                    '-message', session_msg,
+                                    '-title', '📊 AI Coach Session Status',
+                                    '-sound', 'Glass'],
+                                   capture_output=True, timeout=5, text=True)
+            
+            # Brief pause between notifications
+            import time
+            time.sleep(1)
+            
+            # Second notification: Today's focus 
+            focus_msg = f"Today's goal: Maintain 8 hours of productive work. Current progress: {worksmart_hours:.1f}/8.0 hours ({worksmart_hours/8*100:.0f}%)"
+            subprocess.run(['terminal-notifier',
+                           '-message', focus_msg,
+                           '-title', '🎯 Today\'s Productivity Goal',
+                           '-sound', 'Hero'],
+                          capture_output=True, timeout=5, text=True)
+                
+            # Also send an informative AppleScript dialog
+            try:
+                dialog_text = f"🚀 AI Coach Active!\\n\\n📊 Session Status:\\n• Working hours today: {worksmart_hours:.1f}/8.0\\n• Coaching sessions: {coaching_count}\\n• Notification frequency: {notification_mode}\\n\\n🎯 Your AI coach will help you maintain focus and achieve your 8-hour productivity goal."
+                subprocess.run([
+                    'osascript', '-e',
+                    f'tell application "System Events" to display dialog "{dialog_text}" with title "WorkSmart AI Coach Ready" buttons {{"Let\'s Go!"}} default button "Let\'s Go!" giving up after 5'
+                ], capture_output=True, timeout=6)
+            except:
+                pass
+        except Exception as e:
+            pass
+
+        print("🎯 Monitoring for productivity patterns...\n", flush=True)
 
         event_buffer = []
-        analysis_interval = 6  # Analyze every 6 events (10 minutes)
+        analysis_interval = 3  # Analyze every 3 events (5-6 minutes) for active coaching
 
         while self.running:
             try:
@@ -323,14 +365,18 @@ class EnhancedProductionLauncher:
                 # Save updated session data
                 self.save_session_data()
 
+                # Debug: Log buffer status
+                if len(event_buffer) % 1 == 0:  # Every event
+                    print(f"[DEBUG] Event buffer: {len(event_buffer)}/{analysis_interval} events", flush=True)
+
                 # Analyze when buffer is full
                 if len(event_buffer) >= analysis_interval:
                     await self.analyze_and_coach(event_buffer)
                     # Keep only recent events for continuity
                     event_buffer = event_buffer[-3:]
 
-                # Wait 100 seconds (WorkSmart's standard interval)
-                await asyncio.sleep(100)
+                # Wait 60 seconds for more active coaching (was 100)
+                await asyncio.sleep(60)
 
             except KeyboardInterrupt:
                 self._save_session_on_shutdown()
@@ -373,8 +419,8 @@ class EnhancedProductionLauncher:
 
     async def analyze_and_coach(self, event_buffer):
         """Enhanced analysis with personalized coaching"""
+        
         # Analyze silently
-
         # Analyze telemetry pattern
         analysis = self.telemetry_analyzer.analyze(event_buffer)
 
@@ -427,6 +473,10 @@ class EnhancedProductionLauncher:
 
         # Use the unified coaching system
         try:
+            
+            # FORCE WorkSmart session active for debugging
+            analysis['worksmart_session_active'] = True
+            
             # Get coaching using the unified interface
             coaching_result = await self.coach.analyze_telemetry(
                 analysis, user_id="default", context_history=event_buffer)
@@ -441,6 +491,9 @@ class EnhancedProductionLauncher:
                 print(f"🧠 {coach_type_display} coaching: {coaching_result.get('type', coaching_result.get('nudge_type', 'unknown'))} "
                       f"(confidence: {coaching_result.get('confidence', 0.5):.1%})")
 
+                # CRITICAL: Deliver the notification!
+                self.coach._deliver_notification(coaching_result)
+                
                 # Record post-intervention context for learning (if supported)
                 if 'id' in coaching_result and hasattr(self.coach, 'record_post_intervention_context'):
                     intervention_id = coaching_result['id']

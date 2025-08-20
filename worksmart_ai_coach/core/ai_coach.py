@@ -625,11 +625,12 @@ class HistoryCruncher:
             # Process WorkSmart deskapp_log events for comprehensive insights
             elif et == "deskapp_log":
                 window_title = ev.get("window_title", "")
-                
+
                 # Extract API activity patterns
                 if "GET request, url=" in window_title:
-                    url_part = window_title.split("url=")[-1].split(":")[0].strip()
-                    
+                    url_part = window_title.split(
+                        "url=")[-1].split(":")[0].strip()
+
                     # Track API endpoints for work pattern analysis
                     if "api.crossover.com" in url_part:
                         if "productivity" in url_part:
@@ -638,24 +639,27 @@ class HistoryCruncher:
                             focus_dwell["API-Poll-Check"] += 1
                         elif "timecard" in url_part:
                             focus_dwell["API-Timecard-Sync"] += 1
-                    
+
                     # Track external development resources
                     if any(site in url_part for site in ["github.com", "stackoverflow.com", "docs."]):
-                        host = url_part.split("//")[-1].split("/")[0] if "//" in url_part else url_part.split("/")[0]
+                        host = url_part.split(
+                            "//")[-1].split("/")[0] if "//" in url_part else url_part.split("/")[0]
                         host_counts[host] += 1
                         if any(h in host for h in doc_hosts):
                             doc_visit[host] += 1
-                
+
                 # Track comprehensive work activities from actual logs
                 if "Running job:" in window_title:
-                    job_type = window_title.split("Running job:")[-1].split(":")[0].strip()
+                    job_type = window_title.split(
+                        "Running job:")[-1].split(":")[0].strip()
                     focus_dwell[f"Job-{job_type}"] += 1
-                    
+
                     # Specific job type analysis based on actual log patterns
                     if "TimecardUploadJob" in job_type:
                         focus_dwell["Work-Session-Management"] += 5
                     elif "ActivityJob" in job_type:
-                        focus_dwell["Active-Work-Tracking"] += 10  # High value - indicates active work
+                        # High value - indicates active work
+                        focus_dwell["Active-Work-Tracking"] += 10
                     elif "PollsRequestJob" in job_type:
                         focus_dwell["System-Health-Check"] += 2
                     elif "DataSyncJob" in job_type:
@@ -664,23 +668,24 @@ class HistoryCruncher:
                         focus_dwell["Work-Documentation"] += 4
                     elif "WebcamshotJob" in job_type:
                         focus_dwell["Work-Monitoring"] += 2
-                
+
                 # Track actual activity patterns from logs
                 if "run activity job:" in window_title:
-                    focus_dwell["Active-Work-Sessions"] += 15  # Strong indicator of work
-                
+                    # Strong indicator of work
+                    focus_dwell["Active-Work-Sessions"] += 15
+
                 if "ScreenshotJob build event:" in window_title:
                     focus_dwell["Work-Evidence-Capture"] += 5
-                
+
                 if "WebcamshotJob build event:" in window_title:
                     focus_dwell["Work-Presence-Tracking"] += 3
-                
+
                 if "Synchronizing data:" in window_title:
                     focus_dwell["Work-Data-Sync"] += 4
-                
+
                 if "Updating data..." in window_title:
                     focus_dwell["System-Updates"] += 2
-                
+
                 # Track data capture sessions (active work indicators)
                 if "Data capture" in window_title:
                     if "started" in window_title:
@@ -689,7 +694,7 @@ class HistoryCruncher:
                         focus_dwell["Work-Session-End"] += 5
                     else:
                         focus_dwell["Active-Work-Time"] += 10
-                
+
                 # Track file and activity processing
                 if "readTimecardFromPath" in window_title:
                     # Extract file path for work pattern analysis
@@ -698,27 +703,28 @@ class HistoryCruncher:
                         # Count different work sessions by extracting timestamp patterns
                         if "json" in window_title:
                             focus_dwell["Work-Sessions-Logged"] += 1
-                
+
                 # Track timecard management
                 if "Found pending timecards:" in window_title:
                     try:
                         # Extract number of pending timecards
-                        count = int(window_title.split("Found pending timecards:")[-1].split(":")[0].strip())
+                        count = int(window_title.split(
+                            "Found pending timecards:")[-1].split(":")[0].strip())
                         if count > 0:
                             focus_dwell["Pending-Work-Data"] += count
                         else:
                             focus_dwell["Up-to-Date-Tracking"] += 1
                     except:
                         focus_dwell["Timecard-Check"] += 1
-                
+
                 # Track productivity monitoring
                 if "polls/pending" in window_title:
                     focus_dwell["Productivity-Monitoring"] += 1
-                
+
                 # Track file system activity
                 if "crossoverFiles" in window_title:
                     focus_dwell["Work-File-Access"] += 2
-                
+
                 # Track system health
                 if "PortalClient" in window_title:
                     focus_dwell["System-Communication"] += 1
@@ -862,29 +868,28 @@ class AICoach:
         self.claude_client = None
         self._setup_anthropic_client()
 
-        # Core coaching thresholds and strategies - RAISED THRESHOLDS FOR LESS FREQUENT NOTIFICATIONS
+        # Core coaching thresholds and strategies - OPTIMIZED FOR 8H GOAL ACHIEVEMENT
         self.coaching_strategies = {
-            # lowered 'low' from 0.3 to 0.25
-            'productivity_thresholds': {'low': 0.25, 'high': 0.7},
-            # lowered 'low' from 0.4 to 0.35
-            'focus_thresholds': {'low': 0.35, 'high': 0.8},
-            # raised from 0.5/0.7 to 0.65/0.8
-            'stress_thresholds': {'moderate': 0.65, 'high': 0.8},
-            # lowered from 0.3/0.2 to 0.25/0.15
-            'energy_thresholds': {'low': 0.25, 'critical': 0.15}
+            # More sensitive to catch productivity drops early
+            'productivity_thresholds': {'low': 0.35, 'high': 0.7},
+            # Catch focus issues before they hurt 8h quality
+            'focus_thresholds': {'low': 0.45, 'high': 0.8},
+            # Earlier stress intervention to maintain 8h sustainability
+            'stress_thresholds': {'moderate': 0.55, 'high': 0.75},
+            # Energy crucial for 8h - catch drops early
+            'energy_thresholds': {'low': 0.35, 'critical': 0.20}
         }
 
-        # Notification & alert config - REDUCED FREQUENCY FOR LESS SPAM
+        # Notification & alert config - OPTIMIZED FOR 8H PRODUCTIVITY COACHING
         self.notification_config = {
-            'max_per_hour': 2,                 # global cap (reduced from 4)
-            # global cooldown (increased from 12 minutes)
-            'min_minutes_between': 20,
+            'max_per_hour': 6,                 # More alerts for 8h coaching
+            'min_minutes_between': 8,          # Faster response for productivity
             'per_type_cooldown_minutes': {
-                'stress_reduction': 20,        # increased from 10
-                'energy_boost': 30,           # increased from 20
-                'productivity_boost': 35,     # increased from 25
-                'focus_enhancement': 30,      # increased from 20
-                'break_reminder': 45          # increased from 30
+                'stress_reduction': 15,        # Quicker stress intervention
+                'energy_boost': 12,           # Energy alerts more frequent
+                'productivity_boost': 10,     # Core 8h productivity alerts
+                'focus_enhancement': 12,      # Focus critical for 8h
+                'break_reminder': 20          # Reasonable break spacing
             },
             'suppress_in_meeting': True,       # gate non-critical nudges when in meeting
             'allow_in_meeting_types': ['stress_reduction'],
@@ -892,6 +897,9 @@ class AICoach:
             'repeat_suppression_minutes': 90,
             'default_channel': 'system_banner'  # optional: 'toast', 'modal', 'push'
         }
+
+        # Configure notification frequency based on user preference
+        self._configure_notification_frequency()
 
         # Standardize canonical keys used throughout
         self.keys = {
@@ -935,6 +943,14 @@ class AICoach:
         # Intervention history
         self.intervention_history = {}
 
+        # Inactivity and day transition tracking
+        self.last_activity_time = datetime.now()
+        self.last_activity_data = {'keystrokes': 0, 'clicks': 0}
+        self.current_day = datetime.now().date()
+        self.day_transition_announced = False
+        self.inactivity_level = None  # None, '30min', '2hr', '6hr', '12hr'
+        self.last_inactivity_message = None
+
         # Persona detection patterns
         self.persona_patterns = {
             'developer': {
@@ -942,21 +958,21 @@ class AICoach:
                 'keywords': ['code', 'debug', 'commit', 'pull request', 'repository', 'function', 'class'],
                 'coaching_messages': {
                     'productivity_boost': [
-                        "🚀 Focus on your current coding task. Try a 25/5 cycle next.",
-                        "🚀 Commit to one function now—set a 25‑min timer.",
-                        "🚀 Silence alerts and full‑screen the editor for a 25‑minute push."
+                        "🚀 ONE FUNCTION. 25 minutes. Close Slack/Discord. Commit when done.",
+                        "🚀 Kill all browser tabs. Full-screen IDE. Ship ONE feature. NOW.",
+                        "🚀 Productivity tanking. Pick the hardest bug. Solve it. 25 min timer."
                     ],
                     'focus_enhancement': [
-                        "Close non‑essential tabs and notifications—give the code your full attention.",
-                        "Switch to distraction‑free mode in your editor for the next 20 minutes."
+                        "🎯 Context switching killing you. Cmd+W everything except IDE. Code for 20 min straight.",
+                        "💡 Focus shot. Distraction-free mode NOW. One file. One problem. GO."
                     ],
                     'stress_reduction': [
-                        "Take a step back—2 minutes of deep breathing, then retry the bug.",
-                        "Quick reset: walk for 3 minutes, then return."
+                        "😤 Debugging too long. Walk 2 min. Fresh eyes = solved bug.",
+                        "⚠️ Stress spike. git commit. Stand up. Back in 3 min with solution."
                     ],
                     'break_reminder': [
-                        "You've been coding for a while—take 5 minutes to prevent bugs.",
-                        "Stand, stretch, water break—be back in 5."
+                        "⏰ 2+ hours coding. Break NOW or ship bugs. Walk. Water. 5 min.",
+                        "💭 RSI warning. Stretch hands/neck 60 sec or pay later."
                     ]
                 }
             },
@@ -965,20 +981,20 @@ class AICoach:
                 'keywords': ['data', 'analysis', 'report', 'dashboard', 'visualization', 'spreadsheet'],
                 'coaching_messages': {
                     'productivity_boost': [
-                        "📊 Focus on your current analysis. Break down complex data problems into smaller, manageable pieces.",
-                        "📊 Time-box this analysis: 30 minutes max, then review progress."
+                        "📊 ANALYSIS PARALYSIS. Pick ONE metric. Deep dive 30 min. Report done.",
+                        "📊 Data rabbit hole. STOP. Export findings NOW. Polish later."
                     ],
                     'focus_enhancement': [
-                        "Minimize data distractions. Close extra spreadsheets and focus on your primary analysis.",
-                        "Single dataset focus: hide other tabs until this analysis is complete."
+                        "🎯 10+ spreadsheets open. Close all but ONE. Finish analysis or drown in data.",
+                        "💡 Excel hell. Save work. Close everything. ONE dataset. 25 min sprint."
                     ],
                     'stress_reduction': [
-                        "Data can be overwhelming. Take a break to clear your mind and return with fresh perspective.",
-                        "Step back from the numbers—5 minutes away will bring clarity."
+                        "😤 Numbers blur = brain fried. Save. Walk 3 min. Answer will appear.",
+                        "⚠️ Overthinking data. Step back 2 min. Pattern obvious when you return."
                     ],
                     'break_reminder': [
-                        "You've been analyzing data intensively. A break will help you spot patterns more clearly.",
-                        "Data fatigue is real—take 10 minutes to reset your analytical mind."
+                        "⏰ 2+ hours in spreadsheets. Eyes failing. Break NOW or miss insights.",
+                        "💭 Data fatigue = bad decisions. 5 min away. Come back sharp."
                     ]
                 }
             },
@@ -987,20 +1003,20 @@ class AICoach:
                 'keywords': ['meeting', 'review', 'team', 'project', 'deadline', 'status', 'planning'],
                 'coaching_messages': {
                     'productivity_boost': [
-                        "🎯 Prioritize your most important management task. Delegate what you can to maximize impact.",
-                        "🎯 Pick your top 3 priorities—everything else can wait 25 minutes."
+                        "🎯 FIREFIGHTING MODE. Stop. Pick THREE fires. Let others burn. Delegate NOW.",
+                        "🎯 Meeting madness. Cancel 2 meetings. Block 30 min. Do actual work."
                     ],
                     'focus_enhancement': [
-                        "Batch your communications. Set specific times for emails and messages to maintain focus.",
-                        "Deep work block: close Slack/Teams for the next 30 minutes."
+                        "💡 Slack/email killing output. CLOSE THEM. 30 min deep work or team suffers.",
+                        "🎯 Context switching chaos. One decision. Make it. Move on. Stop overthinking."
                     ],
                     'stress_reduction': [
-                        "Leadership is demanding. Take a moment to breathe and remember you don't have to solve everything right now.",
-                        "Pause: delegate one task, then take 5 minutes for yourself."
+                        "😤 Can't manage burnt out. 3 min walk. Delegate 1 thing. Come back clear.",
+                        "⚠️ Decision fatigue. Stop deciding. 5 min break. Trust your gut after."
                     ],
                     'break_reminder': [
-                        "Even great managers need breaks. Step away to return with better decision-making clarity.",
-                        "Strategic pause: 10 minutes away will improve your next 3 decisions."
+                        "⏰ Back-to-back meetings 2+ hours. Break or make bad calls. 5 min. NOW.",
+                        "💭 Leader burnout = team burnout. Model breaks. Take 5 min."
                     ]
                 }
             },
@@ -1009,16 +1025,16 @@ class AICoach:
                 'keywords': [],
                 'coaching_messages': {
                     'productivity_boost': [
-                        "💪 Focus on your most important task. Break it down into smaller, actionable steps.",
-                        "💪 Pick one thing and do it well for the next 25 minutes."
+                        "💪 OUTPUT FAILING. One task. 25 min timer. Everything else waits.",
+                        "💪 Productivity 30%. Pick hardest task. Do it NOW. Rest follows."
                     ],
                     'focus_enhancement': [
-                        "Minimize distractions around you. Single-tasking will improve your work quality.",
-                        "Close everything except what you need for this one task."
+                        "🎯 Multitasking = nothing done. ONE THING. Complete it. Then next.",
+                        "💡 Focus dead. Close 10 tabs. Pick 1 task. 20 min sprint."
                     ],
                     'stress_reduction': [
-                        "Take a few deep breaths. A brief break can help reset your mindset.",
-                        "Quick reset: 2-3 deep breaths, then back to focused work."
+                        "😤 Overwhelmed. Stop. Breathe 4-7-8 x3. Pick ONE thing. Start.",
+                        "⚠️ Stress building. 2 min walk beats 2 hour spiral. GO."
                     ],
                     'break_reminder': [
                         "You've been working steadily. A short break will help maintain your productivity.",
@@ -1065,6 +1081,33 @@ class AICoach:
         except Exception as e:
             logger.warning(f"Anthropic client setup failed: {e}")
 
+    def _configure_notification_frequency(self):
+        """Configure notification frequency based on user preference"""
+        frequency = os.getenv('NOTIFICATION_FREQUENCY', 'active')
+
+        if frequency == 'gentle':
+            # GENTLE (1-2 per hour) - Minimal, key insights only
+            self.notification_config['max_per_hour'] = 2
+            self.notification_config['min_minutes_between'] = 25
+            for key in self.notification_config['per_type_cooldown_minutes']:
+                self.notification_config['per_type_cooldown_minutes'][key] *= 2
+
+        elif frequency == 'active':
+            # ACTIVE (5-6 per hour) - Frequent guidance & alerts
+            self.notification_config['max_per_hour'] = 6
+            self.notification_config['min_minutes_between'] = 8
+            for key in self.notification_config['per_type_cooldown_minutes']:
+                self.notification_config['per_type_cooldown_minutes'][key] = max(
+                    5, self.notification_config['per_type_cooldown_minutes'][key] * 0.7)
+
+        else:  # balanced (default)
+            # BALANCED (3-4 per hour) - Regular helpful coaching
+            self.notification_config['max_per_hour'] = 4
+            self.notification_config['min_minutes_between'] = 12
+            # Keep default cooldown times
+
+        logger.info(f"✅ Notification frequency set to {frequency} mode")
+
     def _determine_capabilities(self) -> List[str]:
         """Determine system capabilities based on available libraries"""
         capabilities = ['basic_coaching',
@@ -1086,6 +1129,276 @@ class AICoach:
         return capabilities
 
     # ========================================================================
+    # ENHANCED 3-PASS CLAUDE ANALYSIS SYSTEM
+    # ========================================================================
+    
+    async def _run_three_pass_claude_analysis(self, user_id: str, hist7: Dict, current: Dict, telemetry: Dict) -> Optional[Dict]:
+        """
+        Comprehensive 3-pass Claude analysis system:
+        Pass 1: Historical context analysis
+        Pass 2: Current activity analysis  
+        Pass 3: Synthesis and decision
+        """
+        print(f"[DEBUG] 🔬 Starting 3-pass Claude analysis", flush=True)
+        
+        # Extract maximum telemetry data
+        full_telemetry = self._extract_comprehensive_telemetry_data(telemetry)
+        
+        try:
+            # Pass 1: Historical Context Analysis
+            print(f"[DEBUG] 📚 Pass 1: Analyzing historical patterns...", flush=True)
+            historical_analysis = await self._claude_pass1_historical_analysis(user_id, hist7, full_telemetry)
+            
+            # Pass 2: Current Activity Analysis
+            print(f"[DEBUG] 📊 Pass 2: Analyzing current activity...", flush=True)
+            current_analysis = await self._claude_pass2_current_analysis(current, full_telemetry)
+            
+            # Pass 3: Synthesis and Decision
+            print(f"[DEBUG] 🎯 Pass 3: Synthesizing and deciding...", flush=True)
+            final_decision = await self._claude_pass3_synthesis(historical_analysis, current_analysis, full_telemetry)
+            
+            return final_decision
+            
+        except Exception as e:
+            print(f"[DEBUG] ❌ 3-pass analysis failed: {e}", flush=True)
+            return None
+    
+    def _extract_comprehensive_telemetry_data(self, telemetry: Dict) -> Dict:
+        """Extract maximum available telemetry data for Claude analysis"""
+        comprehensive_data = {
+            # Core metrics
+            'productivity_score': telemetry.get('productivity_score', 0.0),
+            'focus_score': telemetry.get('focus_score', 0.0),
+            'energy_score': telemetry.get('energy_score', 0.5),
+            'stress_score': telemetry.get('stress_score', 0.5),
+            
+            # Current activity
+            'current_app': telemetry.get('current_app', 'unknown'),
+            'current_window': telemetry.get('current_window', ''),
+            'current_url': telemetry.get('current_url', ''),
+            'current_document': telemetry.get('current_document', ''),
+            
+            # Activity patterns
+            'keyboard_count': telemetry.get('keyboard_count', 0),
+            'mouse_count': telemetry.get('mouse_count', 0),
+            'total_activity': telemetry.get('total_activity', 0),
+            'idle_time_minutes': telemetry.get('idle_time_minutes', 0),
+            
+            # WorkSmart data
+            'worksmart_hours_today': telemetry.get('worksmart_hours_today', '0:0'),
+            'worksmart_session_active': telemetry.get('worksmart_session_active', False),
+            'worksmart_total_keystrokes': telemetry.get('worksmart_total_keystrokes', 0),
+            'worksmart_total_clicks': telemetry.get('worksmart_total_clicks', 0),
+            
+            # Context
+            'in_meeting': telemetry.get('in_meeting', False),
+            'time_of_day': telemetry.get('time_of_day', 'unknown'),
+            'day_of_week': telemetry.get('day_of_week', 'unknown'),
+            
+            # Recent events buffer for pattern analysis
+            'recent_events': telemetry.get('recent_events', []),
+            'event_count': len(telemetry.get('recent_events', [])),
+        }
+        
+        # Add calculated metrics
+        if comprehensive_data['keyboard_count'] > 0 or comprehensive_data['mouse_count'] > 0:
+            comprehensive_data['activity_ratio'] = comprehensive_data['keyboard_count'] / max(1, comprehensive_data['mouse_count'])
+        else:
+            comprehensive_data['activity_ratio'] = 0.0
+        
+        print(f"[DEBUG] 📋 Comprehensive telemetry extracted: {len(comprehensive_data)} data points", flush=True)
+        return comprehensive_data
+
+    async def _claude_pass1_historical_analysis(self, user_id: str, hist7: Dict, telemetry: Dict) -> str:
+        """Pass 1: Deep historical context analysis"""
+        prompt = f"""You are an expert productivity analyst. Analyze this user's historical patterns and current context to provide a conclusive assessment.
+
+HISTORICAL DATA (7 days):
+- Host activity: {hist7.get('host_counts', {})}
+- Document usage: {hist7.get('doc_visits', {})}
+- App switching patterns: {hist7.get('switches', 0)} switches
+- Focus patterns: {hist7.get('focus_dwell', {})}
+- File activity: {hist7.get('file_touches', {})}
+
+CURRENT CONTEXT:
+- Current app: {telemetry.get('current_app', 'unknown')}
+- Current window: {telemetry.get('current_window', '')}
+- Current URL: {telemetry.get('current_url', '')}
+- WorkSmart hours today: {telemetry.get('worksmart_hours_today', '0:0')}
+- Time context: {telemetry.get('time_of_day', 'unknown')} on {telemetry.get('day_of_week', 'unknown')}
+
+TASK: Provide a conclusive historical analysis focusing on:
+1. Historical productivity patterns and trends
+2. How current activity fits within historical context
+3. Specific concerns or opportunities based on patterns
+4. Risk assessment (procrastination, distraction, burnout indicators)
+
+Be specific, data-driven, and conclusive. Identify concrete patterns and concerns."""
+
+        try:
+            response = await self.claude_client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=300,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            analysis = response.content[0].text
+            print(f"[DEBUG] 📚 Pass 1 complete: {len(analysis)} chars", flush=True)
+            return analysis
+        except Exception as e:
+            print(f"[DEBUG] ❌ Pass 1 failed: {e}", flush=True)
+            return "Historical analysis unavailable"
+
+    async def _claude_pass2_current_analysis(self, current: Dict, telemetry: Dict) -> str:
+        """Pass 2: Deep current activity analysis"""
+        prompt = f"""You are an expert productivity analyst. Analyze this user's current activity state and provide a conclusive assessment.
+
+CURRENT ACTIVITY SNAPSHOT:
+- App: {current.get('current_app', 'unknown')}
+- Productivity score: {current.get('productivity_score', 0.0):.2f}
+- Focus level: {telemetry.get('focus_score', 0.0):.2f}
+- Energy level: {telemetry.get('energy_score', 0.5):.2f}
+- Stress indicators: {telemetry.get('stress_score', 0.5):.2f}
+
+ACTIVITY METRICS:
+- Keyboard activity: {telemetry.get('keyboard_count', 0)} keystrokes
+- Mouse activity: {telemetry.get('mouse_count', 0)} clicks
+- Total activity: {telemetry.get('total_activity', 0)}
+- Idle time: {telemetry.get('idle_time_minutes', 0)} minutes
+- Activity ratio: {telemetry.get('activity_ratio', 0.0):.2f}
+
+CONTEXT:
+- Window title: {telemetry.get('current_window', 'unknown')}
+- URL: {telemetry.get('current_url', 'none')}
+- In meeting: {telemetry.get('in_meeting', False)}
+- Recent events: {telemetry.get('event_count', 0)} events
+
+TASK: Provide a conclusive current activity analysis focusing on:
+1. Immediate productivity assessment and concerns
+2. Activity quality and engagement levels
+3. Distraction or focus indicators
+4. Immediate risks or opportunities for improvement
+
+Be specific about what the data indicates about their current state."""
+
+        try:
+            response = await self.claude_client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=300,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            analysis = response.content[0].text
+            print(f"[DEBUG] 📊 Pass 2 complete: {len(analysis)} chars", flush=True)
+            return analysis
+        except Exception as e:
+            print(f"[DEBUG] ❌ Pass 2 failed: {e}", flush=True)
+            return "Current analysis unavailable"
+
+    async def _claude_pass3_synthesis(self, historical: str, current: str, telemetry: Dict) -> Optional[Dict]:
+        """Pass 3: Synthesize analyses and make final coaching decision"""
+        prompt = f"""You are an expert AI productivity coach. Based on comprehensive historical and current analyses, make a final coaching decision.
+
+HISTORICAL ANALYSIS:
+{historical}
+
+CURRENT ANALYSIS:
+{current}
+
+SYNTHESIS CONTEXT:
+- WorkSmart session active: {telemetry.get('worksmart_session_active', False)}
+- Hours worked today: {telemetry.get('worksmart_hours_today', '0:0')}
+- Current productivity: {telemetry.get('productivity_score', 0.0):.2f}
+- Current focus: {telemetry.get('focus_score', 0.0):.2f}
+
+DECISION TASK: 
+Based on both analyses, decide if coaching intervention is needed. Be CONSERVATIVE - only recommend intervention for clear, urgent situations. High-performance users prefer minimal interruptions.
+
+INTERVENTION CRITERIA:
+- Only intervene if productivity/focus scores are consistently extremely low (< 0.1) for extended periods
+- Recognize that AI tools (ChatGPT, Claude, Cursor) are productive work environments
+- Prioritize user autonomy - they know their workflow best
+- Consider that brief low activity may be normal thinking/planning time
+
+If intervention needed, provide:
+1. INTERVENTION TYPE: One of [productivity_boost, focus_enhancement, break_reminder, distraction_alert, stress_reduction, positive_reinforcement, no_action]
+2. PRIORITY LEVEL: 1 (low), 2 (medium), or 3 (high) 
+3. MESSAGE: Clear, actionable 1-sentence coaching message (under 100 chars)
+4. REASONING: Brief explanation of why this intervention was chosen
+
+Format your response as:
+DECISION: [YES/NO]
+TYPE: [intervention_type]  
+PRIORITY: [1-3]
+MESSAGE: [coaching message]
+REASONING: [explanation]
+
+Be very conservative - when in doubt, choose NO."""
+
+        try:
+            response = await self.claude_client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=200,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            decision_text = response.content[0].text
+            print(f"[DEBUG] 🎯 Pass 3 complete: {decision_text[:100]}...", flush=True)
+            
+            # Parse Claude's decision
+            return self._parse_claude_decision(decision_text, telemetry)
+            
+        except Exception as e:
+            print(f"[DEBUG] ❌ Pass 3 failed: {e}", flush=True)
+            return None
+    
+    def _parse_claude_decision(self, decision_text: str, telemetry: Dict) -> Optional[Dict]:
+        """Parse Claude's structured decision into intervention dict"""
+        try:
+            lines = [line.strip() for line in decision_text.split('\n') if line.strip()]
+            
+            decision = None
+            intervention_type = None
+            priority = 2
+            message = None
+            reasoning = None
+            
+            for line in lines:
+                if line.startswith('DECISION:'):
+                    decision = 'YES' in line.upper()
+                elif line.startswith('TYPE:'):
+                    intervention_type = line.split(':', 1)[1].strip()
+                elif line.startswith('PRIORITY:'):
+                    try:
+                        priority = int(line.split(':', 1)[1].strip())
+                    except:
+                        priority = 2
+                elif line.startswith('MESSAGE:'):
+                    message = line.split(':', 1)[1].strip()
+                elif line.startswith('REASONING:'):
+                    reasoning = line.split(':', 1)[1].strip()
+            
+            if not decision or not intervention_type or not message:
+                print(f"[DEBUG] ⚠️  Claude decision parsing incomplete", flush=True)
+                return None
+                
+            return {
+                "id": str(uuid.uuid4()),
+                "type": intervention_type,
+                "message": message,
+                "priority": priority,
+                "urgency": "high" if priority >= 3 else ("medium" if priority >= 2 else "low"),
+                "persona": "claude_analysis",
+                "channel": "terminal_notifier",
+                "meta": {
+                    "source": "claude_3pass",
+                    "reasoning": reasoning,
+                    "confidence": 0.9
+                }
+            }
+            
+        except Exception as e:
+            print(f"[DEBUG] ❌ Failed to parse Claude decision: {e}", flush=True)
+            return None
+
     # THREE-PASS COACHING PIPELINE
     # ========================================================================
 
@@ -1148,31 +1461,108 @@ class AICoach:
         Pass A: crunch history; Pass B: snapshot now; Pass C: decide & generate.
         Returns a normalized intervention dict OR a 'no_suggestion' envelope.
         """
+        print(
+            f"[DEBUG] 🔄 Starting coaching cycle for user {user_id}", flush=True)
+
         # A) History - build 7-day and 30-day digests
         hist7 = self.history_cruncher.build_digest(user_id, days=7)
         hist30 = self.history_cruncher.build_digest(
             user_id, days=30)  # for trend signals
+        print(
+            f"[DEBUG] 📚 History digests built: 7d={len(hist7.get('host_counts', {}))}, 30d={len(hist30.get('host_counts', {}))}", flush=True)
 
         # B) Current snapshot
         current = self.build_current_snapshot(user_id, telemetry)
+        print(
+            f"[DEBUG] 📊 Current snapshot: app={current.get('current_app')}, productivity={current.get('productivity_score', 0):.2f}", flush=True)
 
         # C) Run detectors → candidate intents
         flags: List[DetectorFlag] = []
         for det in self.detectors:
-            flags.extend(det.run(hist7, current))
+            det_flags = det.run(hist7, current)
+            flags.extend(det_flags)
+            if det_flags:
+                print(
+                    f"[DEBUG] 🚩 Detector {det.__class__.__name__} found {len(det_flags)} flags", flush=True)
 
-        # Decision: no suggestion?
+        print(
+            f"[DEBUG] 🎯 Total detector flags found: {len(flags)}", flush=True)
+
+        # Enhanced: 3-Pass Claude Analysis System 
+        if not flags and self.claude_client:
+            print(f"[DEBUG] 🧠 No detector flags - running 3-pass Claude analysis", flush=True)
+            
+            # Check rate limiting before expensive Claude calls
+            if not self._should_send_notification():
+                print(f"[DEBUG] 🚫 Rate limited - skipping Claude analysis", flush=True)
+            else:
+                try:
+                    claude_result = await self._run_three_pass_claude_analysis(user_id, hist7, current, telemetry)
+                    if claude_result:
+                        print(f"[DEBUG] ✨ Claude analysis found intervention: {claude_result.get('type')}", flush=True)
+                        return claude_result
+                except Exception as e:
+                    print(f"[DEBUG] ⚠️  Claude analysis failed: {e}", flush=True)
+        
+        # Fallback: Basic coaching when no detector flags or Claude analysis found
         if not flags:
-            return {
-                "id": str(uuid.uuid4()),
-                "type": "no_suggestion",
-                "message": "No nudge right now—patterns look stable.",
-                "priority": 1,
-                "urgency": "low",
-                "persona": self._get_user_profile(user_id).persona,
-                "channel": "system_banner",
-                "meta": {"source": "three_pass", "reasoning": "No detector flags", "confidence": 0.8}
-            }
+            print(f"[DEBUG] 🔄 No detector/Claude flags - trying basic coaching fallback", flush=True)
+            
+            # Check rate limiting
+            if not self._should_send_notification():
+                print(f"[DEBUG] 🚫 Rate limited - skipping basic coaching", flush=True)
+                return {
+                    "id": str(uuid.uuid4()),
+                    "type": "no_suggestion",
+                    "message": "Rate limited",
+                    "priority": 1,
+                    "urgency": "low",
+                    "persona": self._get_user_profile(user_id).persona,
+                    "channel": "system_banner",
+                    "meta": {"source": "rate_limit", "reasoning": "Too many recent notifications", "confidence": 1.0}
+                }
+            
+            # Check for basic coaching opportunities based on current snapshot
+            productivity_score = current.get('productivity_score', 0.0)
+            current_app = current.get('current_app', 'unknown')
+            
+            print(f"[DEBUG] 📈 Basic coaching check - productivity: {productivity_score:.2f}, app: {current_app}", flush=True)
+            
+            # Basic productivity coaching with higher thresholds for high-performance users
+            if productivity_score < 0.15:  # Only trigger on extremely low productivity
+                return {
+                    "id": str(uuid.uuid4()),
+                    "type": "productivity_boost",
+                    "message": f"🚀 Extended low activity detected in {current_app}. Take a quick break or switch to a high-focus task?",
+                    "priority": 2,
+                    "urgency": "medium",
+                    "persona": self._get_user_profile(user_id).persona,
+                    "channel": "terminal_notifier",
+                    "meta": {"source": "basic_fallback", "reasoning": f"Very low productivity: {productivity_score:.2f}", "confidence": 0.7}
+                }
+            elif productivity_score < 0.25:  # Reduced from 0.5
+                return {
+                    "id": str(uuid.uuid4()),
+                    "type": "gentle_nudge",
+                    "message": f"💡 Lower focus detected in {current_app}. Consider deep work techniques to boost productivity?",
+                    "priority": 1,
+                    "urgency": "low", 
+                    "persona": self._get_user_profile(user_id).persona,
+                    "channel": "terminal_notifier",
+                    "meta": {"source": "basic_fallback", "reasoning": f"Moderate productivity: {productivity_score:.2f}", "confidence": 0.6}
+                }
+            else:
+                # High productivity - encourage or suggest break
+                return {
+                    "id": str(uuid.uuid4()),
+                    "type": "positive_reinforcement",
+                    "message": f"✨ Great focus in {current_app}! Keep up the excellent work or consider a micro-break to maintain momentum.",
+                    "priority": 1,
+                    "urgency": "low",
+                    "persona": self._get_user_profile(user_id).persona,
+                    "channel": "terminal_notifier", 
+                    "meta": {"source": "basic_fallback", "reasoning": f"High productivity: {productivity_score:.2f}", "confidence": 0.8}
+                }
 
         # Merge/choose the top flag (simple heuristic: highest severity)
         severity_rank = {"low": 1, "medium": 2, "high": 3}
@@ -1198,6 +1588,8 @@ class AICoach:
         suppress, reason = self._should_suppress_notification(
             user_id, suggestion, context)
         if suppress:
+            print(
+                f"🔕 DEBUG: Suppressed {suggestion.get('type', 'unknown')} alert - {reason}")
             self._log_notification_event(
                 "suppressed", user_id, suggestion, reason=reason)
             return None
@@ -1249,7 +1641,7 @@ Respond as JSON:
         try:
             msg = await self.claude_client.messages.create(
                 model="claude-3-5-haiku-latest",
-                max_tokens=300,
+                max_tokens=7300,
                 temperature=0.4,
                 messages=[{"role": "user", "content": prompt}]
             )
@@ -1292,11 +1684,37 @@ Respond as JSON:
         Automatically uses the best available method based on system capabilities.
         """
 
-        # CRITICAL: Only coach when WorkSmart is actively monitoring (except in test mode)
-        if not self.test_mode and not telemetry_data.get('worksmart_session_active', False):
+        # Check if WorkSmart is running or we have recent activity (more flexible check)
+        worksmart_active = telemetry_data.get(
+            'worksmart_session_active', False)
+        has_recent_data = len(telemetry_data.get('recent_events', [])) > 0
+        worksmart_hours = telemetry_data.get('worksmart_hours_today', '0:0')
+        has_work_hours = worksmart_hours != '0:0' and not worksmart_hours.startswith(
+            '0:')
+
+        session_valid = worksmart_active or has_recent_data or has_work_hours or self.test_mode
+
+        if not session_valid:
+            print(
+                f"[DEBUG] ❌ SKIPPING coaching - No active session detected:", flush=True)
+            print(
+                f"[DEBUG]   - worksmart_active: {worksmart_active}", flush=True)
+            print(
+                f"[DEBUG]   - has_recent_data: {has_recent_data}", flush=True)
+            print(
+                f"[DEBUG]   - worksmart_hours: {worksmart_hours}", flush=True)
+            print(f"[DEBUG]   - test_mode: {self.test_mode}", flush=True)
             logger.info(
-                "Skipping coaching - WorkSmart not actively monitoring")
+                "Skipping coaching - No active WorkSmart session detected")
             return None
+        else:
+            print(f"[DEBUG] ✅ Session valid - proceeding with coaching:", flush=True)
+            print(
+                f"[DEBUG]   - worksmart_active: {worksmart_active}", flush=True)
+            print(
+                f"[DEBUG]   - has_recent_data: {has_recent_data}", flush=True)
+            print(
+                f"[DEBUG]   - worksmart_hours: {worksmart_hours}", flush=True)
 
         try:
             # NEW: Unified three-pass pipeline (logs + detectors + synthesis)
@@ -1311,12 +1729,20 @@ Respond as JSON:
                                   app="browser", url=telemetry_data["current_url"])
 
             # Run three-pass coaching cycle
+            print(f"[DEBUG] 🚀 Running coaching cycle...", flush=True)
             cycle_result = await self.run_coaching_cycle(user_id, telemetry_data)
+            print(
+                f"[DEBUG] 🎯 Coaching cycle result: {type(cycle_result)} - {cycle_result}", flush=True)
+
             if cycle_result and cycle_result.get("type") != "no_suggestion":
+                print(
+                    f"[DEBUG] ✅ Found intervention: {cycle_result['type']} - {cycle_result['message'][:50]}...", flush=True)
                 logger.info(
                     f"Three-pass coaching: {cycle_result['type']} - {cycle_result['message'][:50]}...")
                 return cycle_result
             elif cycle_result and cycle_result.get("type") == "no_suggestion":
+                print(
+                    f"[DEBUG] ℹ️  Explicit no_suggestion from coaching cycle", flush=True)
                 logger.info("Three-pass coaching: No suggestion needed")
                 return None  # Don't fall back to other methods if explicitly no suggestion
             # Enhanced ML coaching if available
@@ -1332,11 +1758,19 @@ Respond as JSON:
                     return result
 
             # Basic coaching final fallback
-            return await self._analyze_telemetry_basic(telemetry_data, user_id)
+            print(f"[DEBUG] 🔧 Using basic coaching fallback", flush=True)
+            result = await self._analyze_telemetry_basic(telemetry_data, user_id)
+            print(
+                f"[DEBUG] 🔧 Basic coaching result: {result is not None}", flush=True)
+            return result
 
         except Exception as e:
+            print(f"[DEBUG] ❌ Exception in analyze_telemetry: {e}", flush=True)
             logger.error(f"Telemetry analysis failed: {e}")
-            return await self._analyze_telemetry_basic(telemetry_data, user_id)
+            result = await self._analyze_telemetry_basic(telemetry_data, user_id)
+            print(
+                f"[DEBUG] 🔧 Exception fallback result: {result is not None}", flush=True)
+            return result
 
     async def _analyze_telemetry_enhanced(self, telemetry_data: Dict, user_id: str,
                                           context_history: List[Dict] = None) -> Optional[Dict]:
@@ -1450,12 +1884,16 @@ Respond as JSON:
 
     async def _analyze_telemetry_basic(self, telemetry_data: Dict, user_id: str) -> Optional[Dict]:
         """Basic rule-based coaching"""
+        print(f"[DEBUG] 🔧 _analyze_telemetry_basic called", flush=True)
 
         productivity = telemetry_data.get('productivity_score', 0.5)
         focus = telemetry_data.get('focus_quality', 0.5)
         stress = telemetry_data.get('stress_level', 0.5)
         energy = telemetry_data.get('energy_level', 0.5)
         session_hours = telemetry_data.get('session_duration_hours', 0)
+
+        print(
+            f"[DEBUG] 📊 Basic coaching data: prod={productivity:.2f}, focus={focus:.2f}, stress={stress:.2f}, energy={energy:.2f}, hours={session_hours:.1f}", flush=True)
 
         coaching_type, urgency = self._determine_coaching_need(
             productivity, focus, stress, energy, session_hours)
@@ -1492,6 +1930,11 @@ Respond as JSON:
             return None
 
         # Record and return
+        print(
+            f"[DEBUG] 🔧 Basic coaching result: coaching_type={coaching_type}, urgency={urgency}, intervention={intervention is not None}", flush=True)
+        if intervention:
+            print(
+                f"[DEBUG] 🔧 Intervention type: {intervention.get('type')}, message: {intervention.get('message', '')[:50]}...", flush=True)
         self._record_intervention(intervention, user_id)
         self._log_notification_event('sent', user_id, intervention)
         return intervention
@@ -2066,7 +2509,7 @@ Respond as JSON:
                 try:
                     message = await self.claude_client.messages.create(
                         model="claude-3-5-haiku-latest",
-                        max_tokens=300,
+                        max_tokens=7300,
                         temperature=0.7,
                         messages=[{"role": "user", "content": prompt}]
                     )
@@ -2172,7 +2615,7 @@ Respond in JSON format:
 
             message = await self.claude_client.messages.create(
                 model="claude-3-5-haiku-latest",
-                max_tokens=200,
+                max_tokens=7200,
                 temperature=0.7,
                 messages=[{"role": "user", "content": context}]
             )
@@ -2238,32 +2681,53 @@ Provide specific, actionable advice that addresses the {coaching_type} issue. Be
                                  stress: float, energy: float, session_hours: float) -> tuple:
         """Determine if coaching is needed and what type"""
 
+        # Debug metrics
+        print(
+            f"🔍 METRICS: P={productivity:.2f} F={focus:.2f} S={stress:.2f} E={energy:.2f} Hours={session_hours:.1f}")
+
         # Priority order: stress > energy > productivity > focus > breaks
         if stress >= self.coaching_strategies['stress_thresholds']['high']:
+            print(
+                f"🚨 STRESS HIGH: {stress:.2f} >= {self.coaching_strategies['stress_thresholds']['high']}")
             return 'stress_reduction', 'high'
         elif stress >= self.coaching_strategies['stress_thresholds']['moderate']:
+            print(
+                f"⚠️ STRESS MODERATE: {stress:.2f} >= {self.coaching_strategies['stress_thresholds']['moderate']}")
             return 'stress_reduction', 'medium'
 
         if energy <= self.coaching_strategies['energy_thresholds']['critical']:
+            print(
+                f"🔋 ENERGY CRITICAL: {energy:.2f} <= {self.coaching_strategies['energy_thresholds']['critical']}")
             return 'energy_boost', 'high'
         elif energy <= self.coaching_strategies['energy_thresholds']['low']:
+            print(
+                f"⚡ ENERGY LOW: {energy:.2f} <= {self.coaching_strategies['energy_thresholds']['low']}")
             return 'energy_boost', 'medium'
 
-        if productivity <= 0.15:  # Very low productivity (lowered from 0.2)
+        if productivity <= 0.20:  # Very low productivity - catch early for 8h
+            print(f"🚨 PRODUCTIVITY VERY LOW: {productivity:.2f} <= 0.20")
             return 'productivity_boost', 'high'
         elif productivity <= self.coaching_strategies['productivity_thresholds']['low']:
+            print(
+                f"📈 PRODUCTIVITY LOW: {productivity:.2f} <= {self.coaching_strategies['productivity_thresholds']['low']}")
             return 'productivity_boost', 'medium'
 
-        if focus <= 0.25:  # Very low focus (lowered from 0.3)
+        if focus <= 0.30:  # Very low focus - catch early for 8h quality
+            print(f"🎯 FOCUS VERY LOW: {focus:.2f} <= 0.30")
             return 'focus_enhancement', 'medium'
         elif focus <= self.coaching_strategies['focus_thresholds']['low']:
+            print(
+                f"💡 FOCUS LOW: {focus:.2f} <= {self.coaching_strategies['focus_thresholds']['low']}")
             return 'focus_enhancement', 'low'
 
-        if session_hours > 4:  # Long session (increased from 3)
+        if session_hours > 3:  # Long session - break for 8h sustainability
+            print(f"⏰ LONG SESSION: {session_hours:.1f}h > 3h")
             return 'break_reminder', 'medium'
-        elif session_hours > 3:   # increased from 2
+        elif session_hours > 2:   # Regular break reminder
+            print(f"💭 SESSION LENGTH: {session_hours:.1f}h > 2h")
             return 'break_reminder', 'low'
 
+        print("✅ NO COACHING NEEDED - All metrics healthy")
         return None, None  # No coaching needed
 
     def _get_rule_based_coaching(self, coaching_type: str, urgency: str, telemetry: Dict, user_id: str = "default") -> Dict:
@@ -2271,24 +2735,24 @@ Provide specific, actionable advice that addresses the {coaching_type} issue. Be
 
         templates = {
             'productivity_boost': {
-                'very_low': "🎯 Focus boost needed! Try the Pomodoro technique: 25 minutes of focused work, then a 5-minute break.",
-                'low': "Your productivity seems low. Consider focusing on your most important task for the next 25 minutes."
+                'very_low': "🚨 20% PRODUCTIVITY. Kill all tabs. ONE task. 25 minutes. START NOW.",
+                'low': "⚡ Productivity at 30%. Close 5 things. Pick your #1 task. Timer: 25 min. GO."
             },
             'focus_enhancement': {
-                'distracted': "🧘 Focus time! Close distractions and concentrate on one task for improved productivity.",
-                'scattered': "You've been switching between applications. Consider closing unnecessary tabs/apps for better focus."
+                'distracted': "🎯 15+ TAB SWITCHES. Stop. Close everything except ONE work tab. 20 min focus or fail.",
+                'scattered': "💡 Focus dead. Cmd+W all distractions. Full-screen your work. 25 minutes uninterrupted."
             },
             'stress_reduction': {
-                'high': "⚠️ High stress detected! Consider taking a 5-10 minute break to reset and recharge.",
-                'moderate': "Your stress level seems elevated. Take 3 deep breaths or step away for a 2-minute break."
+                'high': "😤 STRESS 80%+. Stop working NOW. 4-7-8 breathing x3. Then ONE task only.",
+                'moderate': "⚠️ Stress climbing. 60-second break NOW or lose 2 hours to burnout."
             },
             'energy_boost': {
-                'critical': "💪 Energy boost time! Try some light stretching or a quick walk to restore your energy.",
-                'low': "Your energy seems low. Stand up, stretch, or take a brief walk to reinvigorate yourself."
+                'critical': "🔋 ENERGY 15%. Stand NOW. Walk 2 min. Cold water. Or crash in 30 min.",
+                'low': "⚡ Energy 30%. Quick fix: Stand, 10 squats, hydrate. Back in 90 seconds."
             },
             'break_reminder': {
-                'urgent': "🛑 Break time! You've been working for a while. Take 5-10 minutes to rest and recharge.",
-                'gentle': "You've been working steadily. A short 5-minute break can help maintain your productivity."
+                'urgent': "⏰ 3+ HOURS NONSTOP. Break NOW or tank. Walk 5 min. Non-negotiable.",
+                'gentle': "💭 90 min sprint done. 5-min break = 30% better next session."
             }
         }
 
@@ -2692,13 +3156,13 @@ Provide specific, actionable advice that addresses the {coaching_type} issue. Be
 
         avg_activity = sum(activities) / len(activities)
 
-        # Calculate base score
+        # Calculate base score with improved thresholds for high-performance users
         if avg_activity > 100:
             base_score = min(1.0, 0.7 + (avg_activity - 100) / 300)
-        elif avg_activity < 20:
-            base_score = max(0.2, avg_activity / 40)
+        elif avg_activity < 5:  # Only penalize extremely low activity
+            base_score = max(0.3, avg_activity / 20)  # Less harsh penalty
         else:
-            base_score = 0.5 + (avg_activity - 20) / 160
+            base_score = 0.5 + (avg_activity - 5) / 100  # More generous scoring
 
         # Personalize based on user profile
         user_profile = self._get_user_profile(user_id)
@@ -2707,9 +3171,9 @@ Provide specific, actionable advice that addresses the {coaching_type} issue. Be
         persona = self._detect_user_persona(context)
         current_app = context.get('current_application', '').lower()
 
-        # Developers: coding apps = higher baseline
-        if persona == 'developer' and any(app in current_app for app in ['vscode', 'intellij', 'pycharm', 'terminal']):
-            base_score = min(1.0, base_score + 0.1)
+        # Developers: coding apps and AI tools = higher baseline
+        if persona == 'developer' and any(app in current_app for app in ['vscode', 'intellij', 'pycharm', 'terminal', 'cursor', 'chatgpt', 'claude', 'comet']):
+            base_score = min(1.0, base_score + 0.15)  # Higher boost for dev tools
 
         # Analysts: data apps = higher baseline
         elif persona == 'analyst' and any(app in current_app for app in ['excel', 'tableau', 'jupyter', 'r studio']):
@@ -2901,6 +3365,28 @@ Provide specific, actionable advice that addresses the {coaching_type} issue. Be
     # ========================================================================
     # NOTIFICATION SUPPRESSION AND COOLDOWN SYSTEM
     # ========================================================================
+    
+    def _should_send_notification(self, user_id: str = "default") -> bool:
+        """Simple rate limiting check for basic coaching fallback"""
+        now = datetime.now()
+        
+        # Check global per-hour cap
+        recent = [i for i in self.intervention_history.values()
+                  if i.get('user_id') == user_id and
+                  datetime.fromisoformat(i.get('timestamp', now.isoformat())) > now - timedelta(hours=1)]
+        
+        if len(recent) >= self.notification_config.get('max_per_hour', 4):
+            return False
+        
+        # Check global cooldown 
+        min_gap = self.notification_config.get('min_minutes_between', 12)
+        if recent:
+            last_ts = max(datetime.fromisoformat(
+                i.get('timestamp', now.isoformat())) for i in recent)
+            if (now - last_ts).total_seconds() < min_gap * 60:
+                return False
+        
+        return True
 
     def _should_suppress_notification(self, user_id: str, intervention: Dict, context: Dict) -> Tuple[bool, str]:
         """Check if notification should be suppressed based on cooldowns, meeting state, etc."""
@@ -3103,40 +3589,111 @@ Provide specific, actionable advice that addresses the {coaching_type} issue. Be
 
         if self.test_mode:
             # In test mode, always print to console with formatting
-            urgency_emoji = {"low": "💡", "medium": "⚡", "high": "🚨"}
+            urgency_emoji = {"low": "💡", "medium": "⚡⚡", "high": "🚨🚨🚨"}
             type_emoji = {
                 "productivity_boost": "🚀", "focus_enhancement": "🎯",
-                "stress_reduction": "😌", "break_reminder": "⏰",
+                "stress_reduction": "😤", "break_reminder": "⏰",
                 "repeat_docs": "📚", "tab_switching": "🔄",
-                "file_churn": "📁", "meeting_distraction": "📞"
+                "file_churn": "📁", "meeting_distraction": "📞",
+                "energy_boost": "🔋"
             }
 
             emoji = urgency_emoji.get(urgency, "💡")
             type_icon = type_emoji.get(suggestion_type, "💭")
 
-            print("\n" + "="*60)
-            print(f"🤖 AI COACH RECOMMENDATION {emoji}")
-            print("="*60)
-            print(f"{type_icon} Type: {suggestion_type}")
-            print(f"🔔 Urgency: {urgency}")
+            # Different formatting based on urgency
+            if urgency == 'high':
+                print("\n" + "🚨"*30)
+                print(f"{'CRITICAL ALERT - ACTION REQUIRED':^60}")
+                print("🚨"*30)
+            elif urgency == 'medium':
+                print("\n" + "="*60)
+                print(f"{'⚡ PERFORMANCE ALERT ⚡':^60}")
+                print("="*60)
+            else:
+                print("\n" + "-"*60)
+                print(f"{'💡 Coaching Tip':^60}")
+                print("-"*60)
+
+            print(f"{type_icon} Type: {suggestion_type.upper()}")
+            print(f"📊 Priority: {urgency.upper()}")
             print(f"👤 Persona: {suggestion.get('persona', 'generic')}")
             print(f"📝 Message: {message}")
             print(f"🕐 Time: {datetime.now().strftime('%H:%M:%S')}")
             if suggestion.get('meta', {}).get('evidence'):
                 print(f"📊 Evidence: {suggestion['meta']['evidence']}")
             print("="*60 + "\n")
+
+            # Also show macOS notification for medium/high urgency
+            if urgency in ['medium', 'high']:
+                try:
+                    import subprocess
+                    title = "⚡ AI COACH" if urgency == 'medium' else "🚨 CRITICAL"
+                    # Use terminal-notifier if available for better notifications
+                    try:
+                        subprocess.run([
+                            'terminal-notifier',
+                            '-title', title,
+                            '-message', message[:100],
+                            '-sound', 'default' if urgency == 'medium' else 'Sosumi',
+                            '-ignoreDnD'  # Show even in Do Not Disturb mode for high urgency
+                        ], capture_output=True, timeout=1)
+                    except:
+                        # Use terminal-notifier for reliable notifications
+                        subprocess.run([
+                            'terminal-notifier',
+                            '-message', message[:100],
+                            '-title', title,
+                            '-sound', 'Ping'
+                        ], capture_output=True, timeout=1)
+                except:
+                    pass  # Fail silently if notification fails
         else:
             # Regular delivery modes
             if channel == 'console':
                 print(f"[AI Coach] {message}")
-            elif channel == 'system_banner':
-                # macOS notification
+            elif channel == 'terminal_notifier':
+                # Direct terminal-notifier delivery
                 try:
                     import subprocess
                     title = f"AI Coach - {suggestion_type.replace('_', ' ').title()}"
-                    subprocess.run(['osascript', '-e',
-                                    f'display notification "{message}" with title "{title}"'],
-                                   check=True, capture_output=True)
+                    sound = 'Sosumi' if urgency == 'high' else ('Ping' if urgency == 'medium' else 'default')
+                    
+                    print(f"[DEBUG] 🔔 Sending terminal-notifier: {message[:50]}...", flush=True)
+                    result = subprocess.run(['terminal-notifier',
+                                            '-message', message,
+                                            '-title', title,
+                                            '-sound', sound],
+                                           capture_output=True, timeout=5, text=True)
+                    print(f"[DEBUG] 📱 Terminal-notifier result: returncode={result.returncode}, stdout='{result.stdout.strip()}', stderr='{result.stderr.strip()}'", flush=True)
+                    
+                except Exception as e:
+                    print(f"[DEBUG] ❌ Terminal-notifier failed: {e}", flush=True)
+                    print(f"[AI Coach] {message}")  # Fallback to console
+            elif channel == 'system_banner':
+                # Use different notification methods based on urgency
+                try:
+                    import subprocess
+                    title = f"AI Coach - {suggestion_type.replace('_', ' ').title()}"
+
+                    if urgency == 'high':
+                        # HIGH URGENCY: Use AppleScript dialog for major issues
+                        dialog_message = f"🚨 CRITICAL PRODUCTIVITY ALERT\\n\\n{message}\\n\\nThis requires immediate attention!"
+                        subprocess.run([
+                            'osascript', '-e',
+                            f'tell application "System Events" to display dialog "{dialog_message}" with title "🚨 {title}" buttons {{"OK"}} default button "OK"'
+                        ], capture_output=True, timeout=10)
+                        # Also log to console
+                        print(f"[AI Coach CRITICAL] {message}")
+                    else:
+                        # LOW/MEDIUM URGENCY: Use terminal-notifier for minor coaching
+                        sound = 'Ping' if urgency == 'medium' else 'default'
+                        subprocess.run(['terminal-notifier',
+                                        '-message', message,
+                                        '-title', title,
+                                        '-sound', sound],
+                                       capture_output=True, timeout=5)
+
                 except Exception as e:
                     logging.warning(f"Failed to show system notification: {e}")
                     print(f"[AI Coach] {message}")  # Fallback to console
@@ -3254,7 +3811,7 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                     try:
                         message = await self.claude_client.messages.create(
                             model="claude-3-5-haiku-latest",
-                            max_tokens=150,
+                            max_tokens=7150,
                             messages=[{"role": "user", "content": prompt}]
                         )
                         print(
@@ -3397,14 +3954,18 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                     print(
                         f"\n[{datetime.now().strftime('%H:%M:%S')}] 🔍 Analyzing YOUR REAL activity...")
                     print(f"   📱 Current App: {current_app}")
-                    
+
                     if "error" in telemetry:
                         print(f"   ⚠️  {telemetry['error']}")
                     else:
-                        print(f"   ⌨️  Real Keystrokes: {telemetry.get('total_keystrokes', 0):,}")
-                        print(f"   🖱️  Real Mouse Clicks: {telemetry.get('total_mouse_clicks', 0):,}")
-                        print(f"   ⏰ Hours Today: {telemetry.get('hours_today', 0):.1f}")
-                        print(f"   📊 Real Metrics: P={telemetry.get('productivity_score', 0):.2f} F={telemetry.get('focus_quality', 0):.2f} S={telemetry.get('stress_level', 0):.2f} E={telemetry.get('energy_level', 0):.2f}")
+                        print(
+                            f"   ⌨️  Real Keystrokes: {telemetry.get('total_keystrokes', 0):,}")
+                        print(
+                            f"   🖱️  Real Mouse Clicks: {telemetry.get('total_mouse_clicks', 0):,}")
+                        print(
+                            f"   ⏰ Hours Today: {telemetry.get('hours_today', 0):.1f}")
+                        print(
+                            f"   📊 Real Metrics: P={telemetry.get('productivity_score', 0):.2f} F={telemetry.get('focus_quality', 0):.2f} S={telemetry.get('stress_level', 0):.2f} E={telemetry.get('energy_level', 0):.2f}")
 
                     # Show detailed analysis of what's being checked
                     await self._show_detailed_analysis("workmart_user", telemetry, current_app)
@@ -3412,10 +3973,19 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                     # Analyze with AI Coach using YOUR patterns
                     result = await self.analyze_telemetry(telemetry, user_id="workmart_user")
 
+                    # Check for inactivity and day transitions FIRST
+                    inactivity_recommendations = self._check_inactivity_and_transitions(
+                        telemetry)
+
                     # Generate smart recommendations based on the comprehensive analysis
                     smart_recommendations = await self._generate_smart_recommendations(telemetry)
-                    
-                    if result:
+
+                    # Prioritize inactivity messages
+                    if inactivity_recommendations:
+                        print(f"   💡 STATUS UPDATE:")
+                        for rec in inactivity_recommendations:
+                            print(f"   {rec}")
+                    elif result:
                         print(f"   ✅ PATTERN-BASED RECOMMENDATION:")
                         self._deliver_notification(result)
                     elif smart_recommendations:
@@ -3423,7 +3993,8 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                         for rec in smart_recommendations:
                             print(f"   {rec}")
                     else:
-                        print(f"   ✅ All metrics look healthy - keep up the excellent work!")
+                        print(
+                            f"   ✅ All metrics look healthy - keep up the excellent work!")
 
                     # Wait for next cycle
                     await asyncio.sleep(interval_minutes * 60)
@@ -3458,25 +4029,27 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
 
             print(
                 f"   📊 History digest: {hist7.get('n_events', 0)} processed events (30 days)")
-            
+
             # Show detailed work pattern analysis
             dwell_data = hist7.get('top_dwell', [])
-            print(f"   💼 Work patterns extracted from {hist7.get('n_events', 0)} events:")
-            
+            print(
+                f"   💼 Work patterns extracted from {hist7.get('n_events', 0)} events:")
+
             # Categorize activities
-            work_activities = [item for item in dwell_data if any(pattern in item[0] for pattern in 
-                              ['Work-Session', 'Active-Work', 'Job-', 'API-', 'Work-Data'])]
-            app_usage = [item for item in dwell_data if item[0] in ['Cursor', 'Google Chrome', 'JavaAppLauncher']]
-            system_activities = [item for item in dwell_data if any(pattern in item[0] for pattern in 
-                                ['System-', 'Productivity-', 'Up-to-Date'])]
-            
+            work_activities = [item for item in dwell_data if any(pattern in item[0] for pattern in
+                                                                  ['Work-Session', 'Active-Work', 'Job-', 'API-', 'Work-Data'])]
+            app_usage = [item for item in dwell_data if item[0]
+                         in ['Cursor', 'Google Chrome', 'JavaAppLauncher']]
+            system_activities = [item for item in dwell_data if any(pattern in item[0] for pattern in
+                                                                    ['System-', 'Productivity-', 'Up-to-Date'])]
+
             if work_activities:
                 print(f"   🔨 Work Activities: {work_activities[:3]}")
             if app_usage:
                 print(f"   💻 App Usage: {app_usage}")
             if system_activities:
                 print(f"   ⚙️  System Health: {system_activities[:2]}")
-            
+
             print(f"   🔄 Tab switches: {hist7.get('tab_switches', 0)}")
             print(f"   🌐 External sites: {hist7.get('top_hosts', [])[:3]}")
             print(f"   📚 Documentation: {hist7.get('top_doc_hosts', [])[:3]}")
@@ -3531,57 +4104,68 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
         try:
             # Get comprehensive work analysis from ALL historical data
             total_work_patterns = await self._analyze_all_historical_work_patterns()
-            
+
             dwell_data = hist7.get('top_dwell', [])
-            recent_work_score = sum(score for activity, score in dwell_data if any(pattern in activity for pattern in 
-                           ['Work-Session', 'Active-Work', 'Work-Data', 'Job-']))
-            
+            recent_work_score = sum(score for activity, score in dwell_data if any(pattern in activity for pattern in
+                                                                                   ['Work-Session', 'Active-Work', 'Work-Data', 'Job-']))
+
             print(f"   💡 Comprehensive Productivity Analysis:")
-            
-            # Show historical work intensity 
+
+            # Show historical work intensity
             if total_work_patterns['total_score'] > 50000:
-                print(f"   🏆 HIGHLY PRODUCTIVE USER: {total_work_patterns['total_score']:,} total work points")
-                print(f"   📈 Work sessions: {total_work_patterns['active_sessions']:,}")
-                print(f"   📊 Documentation: {total_work_patterns['evidence_score']:,} points")
-                print(f"   🔄 Data sync: {total_work_patterns['sync_score']:,} points")
-            
+                print(
+                    f"   🏆 HIGHLY PRODUCTIVE USER: {total_work_patterns['total_score']:,} total work points")
+                print(
+                    f"   📈 Work sessions: {total_work_patterns['active_sessions']:,}")
+                print(
+                    f"   📊 Documentation: {total_work_patterns['evidence_score']:,} points")
+                print(
+                    f"   🔄 Data sync: {total_work_patterns['sync_score']:,} points")
+
             # Recent activity analysis
             if recent_work_score > 20:
                 print(f"   ✅ Recent work activity: {recent_work_score} points")
             else:
-                print(f"   📊 Current session building up (recent: {recent_work_score} points)")
-            
+                print(
+                    f"   📊 Current session building up (recent: {recent_work_score} points)")
+
             # Current state recommendations
             current_metrics = telemetry
             energy = current_metrics.get('energy_level', 0)
             stress = current_metrics.get('stress_level', 0)
             focus = current_metrics.get('focus_quality', 0)
-            
+
             print(f"   🎯 Current State Analysis:")
-            
+
             if current_app == "Cursor":
                 if focus < 0.6:
-                    print(f"   💻 Coding with moderate focus ({focus:.2f}) - consider distraction elimination")
+                    print(
+                        f"   💻 Coding with moderate focus ({focus:.2f}) - consider distraction elimination")
                 else:
-                    print(f"   💻 Good coding focus ({focus:.2f}) - maintain this flow state")
+                    print(
+                        f"   💻 Good coding focus ({focus:.2f}) - maintain this flow state")
             elif current_app in ["Google Chrome", "Safari"]:
                 print(f"   🌐 Research mode detected - balance with implementation time")
             elif current_app == "JavaAppLauncher":
                 print(f"   ☕ Java development detected - complex application work")
-            
+
             # Energy and productivity optimization
             if energy > 0.7 and stress < 0.4:
-                print(f"   🚀 PEAK STATE (E:{energy:.2f}, S:{stress:.2f}) - ideal for challenging tasks")
+                print(
+                    f"   🚀 PEAK STATE (E:{energy:.2f}, S:{stress:.2f}) - ideal for challenging tasks")
             elif energy < 0.4:
-                print(f"   ⚡ Energy dip ({energy:.2f}) - micro-break or light movement recommended")
+                print(
+                    f"   ⚡ Energy dip ({energy:.2f}) - micro-break or light movement recommended")
             elif stress > 0.6:
-                print(f"   😤 Elevated stress ({stress:.2f}) - deep breathing or quick walk")
+                print(
+                    f"   😤 Elevated stress ({stress:.2f}) - deep breathing or quick walk")
             else:
-                print(f"   ✅ Balanced state (E:{energy:.2f}, S:{stress:.2f}) - good for steady progress")
-            
+                print(
+                    f"   ✅ Balanced state (E:{energy:.2f}, S:{stress:.2f}) - good for steady progress")
+
         except Exception as e:
             print(f"   ❌ Insights generation failed: {e}")
-    
+
     async def _analyze_all_historical_work_patterns(self):
         """Analyze ALL WorkSmart historical data for comprehensive work patterns"""
         try:
@@ -3589,12 +4173,12 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
             db_path = self.data_dir / 'telemetry.db'
             conn = sqlite3.connect(str(db_path))
             cur = conn.cursor()
-            
+
             # Get all WorkSmart logs
-            cur.execute('SELECT window_title FROM events WHERE user_id = ? AND etype = ?', 
-                       ('workmart_user', 'deskapp_log'))
+            cur.execute('SELECT window_title FROM events WHERE user_id = ? AND etype = ?',
+                        ('workmart_user', 'deskapp_log'))
             all_logs = cur.fetchall()
-            
+
             patterns = {
                 'active_sessions': 0,
                 'evidence_score': 0,
@@ -3602,7 +4186,7 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                 'management_score': 0,
                 'total_score': 0
             }
-            
+
             for (log_msg,) in all_logs:
                 if 'Running job: ActivityJob:' in log_msg:
                     patterns['active_sessions'] += 1
@@ -3616,116 +4200,79 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                 elif 'Running job: TimecardUploadJob:' in log_msg:
                     patterns['management_score'] += 5
                     patterns['total_score'] += 5
-            
+
             conn.close()
             return patterns
-            
+
         except Exception as e:
             return {'total_score': 0, 'active_sessions': 0, 'evidence_score': 0, 'sync_score': 0, 'management_score': 0}
 
     async def _get_real_crossover_telemetry(self, current_app: str) -> Dict:
-        """Get REAL telemetry data from CrossOver logs - NO FAKE METRICS"""
+        """Get REAL telemetry data from CrossOver logs using WorkSmartDataReader"""
         try:
-            import re
-            crossover_files = Path.home() / "crossoverFiles"
-            log_file = crossover_files / "logs" / "deskapp.log"
+            from .telemetry_system import WorkSmartDataReader
             
-            if not log_file.exists():
+            # Use the fixed WorkSmartDataReader that handles timezone issues
+            reader = WorkSmartDataReader()
+            recent_activities = reader.get_recent_activity_from_logs(1)  # Last hour
+            global_data = reader.get_global_data_from_logs()
+            
+            if not recent_activities:
                 # Fallback to basic real data
                 return {
                     "worksmart_session_active": True,
                     "current_application": current_app,
-                    "error": "No CrossOver logs found"
+                    "total_keystrokes": 0,
+                    "total_mouse_clicks": 0,
+                    "productivity_score": 0.0,
+                    "focus_quality": 0.0,
+                    "hours_today": global_data.get('hours_today', 0),
+                    "error": "No recent CrossOver activity found"
                 }
+
+            # Aggregate real activity data from recent activities
+            total_keystrokes = sum(a.get('keystrokes', 0) for a in recent_activities)
+            total_clicks = sum(a.get('mouse_clicks', 0) for a in recent_activities)
+            total_scrolls = sum(a.get('scroll_counts', 0) for a in recent_activities)
             
-            # Parse recent activity from actual logs
+            # Calculate productivity based on recent activity
+            total_activity = total_keystrokes + total_clicks
+            if total_activity > 100:
+                productivity_score = min(1.0, 0.6 + (total_activity - 100) / 500)
+            elif total_activity > 20:
+                productivity_score = 0.3 + (total_activity - 20) / 200
+            else:
+                productivity_score = max(0.1, total_activity / 40)
+            
+            # Calculate focus quality based on activity consistency
+            focus_quality = 0.5  # Default
+            if len(recent_activities) > 3:
+                activity_levels = [a.get('keystrokes', 0) + a.get('mouse_clicks', 0) for a in recent_activities[-5:]]
+                if activity_levels:
+                    avg_activity = sum(activity_levels) / len(activity_levels)
+                    consistency = 1.0 - (max(activity_levels) - min(activity_levels)) / max(1, avg_activity)
+                    focus_quality = min(1.0, 0.3 + consistency * 0.7)
+
             real_data = {
                 "worksmart_session_active": True,
                 "current_application": current_app,
-                "total_keystrokes": 0,
-                "total_mouse_clicks": 0,
-                "hours_today": 0,
-                "hours_this_week": 0,
-                "activity_sessions": [],
-                "timestamp": datetime.now().isoformat()
+                "total_keystrokes": total_keystrokes,
+                "total_mouse_clicks": total_clicks,
+                "productivity_score": productivity_score,
+                "focus_quality": focus_quality,
+                "stress_level": 0.3,  # Default low stress
+                "energy_level": 0.7,  # Default good energy
+                "hours_today": global_data.get('hours_today', 0),
+                "hours_this_week": global_data.get('hours_this_week', 0),
+                "activity_sessions": recent_activities,
+                "timestamp": datetime.now().isoformat(),
+                "recent_activity_count": len(recent_activities),
+                "latest_activity": recent_activities[0] if recent_activities else None
             }
             
-            with open(log_file, 'r') as f:
-                lines = f.readlines()
-            
-            # Parse last 50 lines for real activity data
-            recent_lines = lines[-50:] if len(lines) > 50 else lines
-            
-            for line in recent_lines:
-                # Extract real keystroke and mouse data
-                if "Counted" in line and "key press" in line:
-                    match = re.search(r'Counted (\d+) key press.*?(\d+) mouse clicks.*?(\d+) scroll counts', line)
-                    if match:
-                        keys, clicks, scrolls = match.groups()
-                        real_data["total_keystrokes"] += int(keys)
-                        real_data["total_mouse_clicks"] += int(clicks)
-                        real_data["activity_sessions"].append({
-                            "keystrokes": int(keys),
-                            "clicks": int(clicks),
-                            "scrolls": int(scrolls)
-                        })
-                
-                # Extract real work hours
-                elif "hours today:" in line:
-                    match = re.search(r'hours today: ([\d:]+).*?hours this week: ([\d:]+)', line)
-                    if match:
-                        today_str, week_str = match.groups()
-                        # Convert "6:30" to decimal hours
-                        today_parts = today_str.split(':')
-                        real_data["hours_today"] = int(today_parts[0]) + int(today_parts[1])/60
-                        
-                        week_parts = week_str.split(':')
-                        real_data["hours_this_week"] = int(week_parts[0]) + int(week_parts[1])/60
-            
-            # Calculate REAL productivity metrics from actual data
-            total_interactions = real_data["total_keystrokes"] + real_data["total_mouse_clicks"]
-            hours_today = real_data["hours_today"]
-            
-            # Real productivity score based on actual activity
-            if hours_today > 0:
-                real_data["productivity_score"] = min(100, (total_interactions / max(hours_today, 1)) * 2) / 100
-            else:
-                real_data["productivity_score"] = 0
-            
-            # Real focus quality from activity patterns
-            if len(real_data["activity_sessions"]) > 1:
-                keystrokes = [s["keystrokes"] for s in real_data["activity_sessions"]]
-                consistency = 1.0 - (max(keystrokes) - min(keystrokes)) / (max(keystrokes) + 1)
-                real_data["focus_quality"] = max(0.3, min(0.9, consistency))
-            else:
-                real_data["focus_quality"] = 0.5
-            
-            # Real stress level from work duration and intensity
-            if hours_today > 8:
-                real_data["stress_level"] = min(0.8, 0.3 + (hours_today - 8) * 0.1)
-            elif total_interactions > 200:
-                real_data["stress_level"] = min(0.6, 0.2 + total_interactions * 0.001)
-            else:
-                real_data["stress_level"] = 0.2
-            
-            # Real energy level from time of day and work duration
-            current_hour = datetime.now().hour
-            if 9 <= current_hour <= 11:  # Morning peak
-                base_energy = 0.8
-            elif 14 <= current_hour <= 16:  # Afternoon peak
-                base_energy = 0.7
-            else:
-                base_energy = 0.6
-            
-            # Adjust for work duration
-            if hours_today > 6:
-                energy_penalty = (hours_today - 6) * 0.05
-                real_data["energy_level"] = max(0.2, base_energy - energy_penalty)
-            else:
-                real_data["energy_level"] = base_energy
-            
             return real_data
-            
+
+
         except Exception as e:
             # Fallback with minimal real data
             return {
@@ -3739,10 +4286,94 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                 "error": f"Failed to parse CrossOver data: {e}"
             }
 
+    def _check_inactivity_and_transitions(self, telemetry: Dict) -> List[str]:
+        """Check for inactivity periods and day transitions"""
+        recommendations = []
+        current_time = datetime.now()
+        current_date = current_time.date()
+
+        # Extract activity metrics
+        keystrokes = telemetry.get('total_keystrokes', 0)
+        clicks = telemetry.get('total_mouse_clicks', 0)
+        hours_today = telemetry.get('hours_today', 0)
+
+        # Check for day transition
+        if current_date != self.current_day:
+            self.current_day = current_date
+            self.day_transition_announced = False
+            self.inactivity_level = None  # Reset inactivity tracking for new day
+
+            # Only announce if we haven't already
+            if not self.day_transition_announced:
+                self.day_transition_announced = True
+                recommendations.append(
+                    "🌅 NEW DAY: Fresh start! Yesterday is done - focus on today's priorities")
+
+                # Reset hours message if hours_today is 0
+                if hours_today == 0:
+                    recommendations.append(
+                        "⏰ WORK DAY RESET: Starting fresh at 0.0 hours - plan your top 3 tasks")
+
+        # Check for inactivity (no keystrokes or clicks)
+        total_activity = keystrokes + clicks
+
+        # Determine if there's actual activity
+        if total_activity > self.last_activity_data.get('total', 0):
+            # There's new activity - reset inactivity tracking
+            self.last_activity_time = current_time
+            self.last_activity_data = {
+                'keystrokes': keystrokes, 'clicks': clicks, 'total': total_activity}
+            self.inactivity_level = None
+            self.last_inactivity_message = None
+        else:
+            # No new activity - check how long it's been
+            time_since_activity = current_time - self.last_activity_time
+            minutes_inactive = time_since_activity.total_seconds() / 60
+
+            # Progressive inactivity detection with different messages
+            if minutes_inactive >= 720 and self.inactivity_level != '12hr':  # 12 hours
+                self.inactivity_level = '12hr'
+                message = "💤 EXTENDED ABSENCE (12+ hrs): Welcome back when you're ready - no pressure"
+                if message != self.last_inactivity_message:
+                    recommendations.append(message)
+                    self.last_inactivity_message = message
+
+            # 6 hours
+            elif minutes_inactive >= 360 and self.inactivity_level not in ['6hr', '12hr']:
+                self.inactivity_level = '6hr'
+                message = "🌙 LONG BREAK DETECTED (6+ hrs): Rest is productive - see you when refreshed!"
+                if message != self.last_inactivity_message:
+                    recommendations.append(message)
+                    self.last_inactivity_message = message
+
+            # 2 hours
+            elif minutes_inactive >= 120 and self.inactivity_level not in ['2hr', '6hr', '12hr']:
+                self.inactivity_level = '2hr'
+                message = "☕ EXTENDED BREAK (2+ hrs): Taking time away is healthy - ready to resume?"
+                if message != self.last_inactivity_message:
+                    recommendations.append(message)
+                    self.last_inactivity_message = message
+
+            elif minutes_inactive >= 30 and self.inactivity_level is None:  # 30 minutes
+                self.inactivity_level = '30min'
+                message = "🚶 BREAK TIME DETECTED (30+ min): Great for productivity reset - feeling refreshed?"
+                if message != self.last_inactivity_message:
+                    recommendations.append(message)
+                    self.last_inactivity_message = message
+
+            # Special handling for end of work day
+            if current_time.hour >= 18 and hours_today > 6 and minutes_inactive > 15:
+                if "end_of_day" not in str(self.last_inactivity_message):
+                    message = f"🏁 END OF DAY: {hours_today:.1f} hours complete - great work today!"
+                    recommendations.append(message)
+                    self.last_inactivity_message = message
+
+        return recommendations
+
     async def _generate_smart_recommendations(self, telemetry: Dict) -> List[str]:
         """Generate smart recommendations using contextual analysis of 1000s of historical datapoints"""
         recommendations = []
-        
+
         # Extract real metrics
         hours_today = telemetry.get('hours_today', 0)
         keystrokes = telemetry.get('total_keystrokes', 0)
@@ -3752,72 +4383,214 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
         stress_level = telemetry.get('stress_level', 0)
         energy_level = telemetry.get('energy_level', 0)
         current_app = telemetry.get('current_application', 'Unknown')
-        
+
         current_hour = datetime.now().hour
         total_interactions = keystrokes + mouse_clicks
-        
-        # CONTEXTUAL ANALYSIS: Get process-specific patterns from 1000s of datapoints
+
+        # Skip normal recommendations if user is inactive
+        if total_interactions == 0 and productivity_score == 0:
+            # User is inactive - let inactivity detection handle messages
+            return []
+
+        # INTELLIGENT PATTERN ANALYSIS: Actually USE the 1000s of datapoints
         process_patterns = await self._analyze_process_specific_patterns(current_app, current_hour)
         historical_patterns = await self._analyze_all_historical_work_patterns()
-        
+
+        # DEEP DATA CRUNCHING: Compare current performance vs historical patterns
+        performance_insights = await self._crunch_performance_data(
+            telemetry, process_patterns, historical_patterns, current_app, current_hour)
+
+        # Use insights for intelligent recommendations - these trigger MEDIUM alerts
+        if performance_insights:
+            # These intelligent insights should trigger medium urgency notifications
+            for insight in performance_insights:
+                if any(keyword in insight for keyword in ['ALERT', 'WARNING', 'BELOW AVERAGE', 'DECLINING']):
+                    # Create medium urgency notification for concerning insights
+                    notification = {
+                        'type': 'performance_insight',
+                        'message': insight,
+                        'urgency': 'medium',
+                        'persona': 'generic',
+                        'priority': 2
+                    }
+                    # This will trigger a medium alert notification
+                    self._deliver_notification(notification)
+
+            recommendations.extend(performance_insights)
+
         # ANALYZE THE 71,139 WORK POINTS AND 3,528 SESSIONS
         if historical_patterns['total_score'] > 50000:
             # High historical productivity user - different standards
             if hours_today > 10:
-                recommendations.append("🚨 LONG DAY ALERT: 10+ hours with 71k+ work history - you've earned a proper break")
+                recommendations.append(
+                    "🚨 LONG DAY ALERT: 10+ hours with 71k+ work history - you've earned a proper break")
             elif productivity_score < 0.5 and hours_today > 6:
-                recommendations.append("⚡ PRODUCTIVITY DIP: Your 3,528 past sessions show you're capable of more - refocus or take strategic break")
-        
+                recommendations.append(
+                    "⚡ PRODUCTIVITY DIP: Your 3,528 past sessions show you're capable of more - refocus or take strategic break")
+
         # FOCUS QUALITY ANALYSIS with historical context
         if focus_quality < 0.4 and total_interactions > 100:
-            recommendations.append("🎯 FOCUS SCATTERED: High activity but low focus - close distractions and do 1 task for 25 minutes")
+            recommendations.append(
+                "🎯 FOCUS SCATTERED: High activity but low focus - close distractions and do 1 task for 25 minutes")
         elif focus_quality < 0.6 and hours_today > 4:
-            recommendations.append("💡 FOCUS DECLINING: Try the 2-minute rule - organize workspace then tackle hardest task first")
-        
+            recommendations.append(
+                "💡 FOCUS DECLINING: Try the 2-minute rule - organize workspace then tackle hardest task first")
+
         # ENERGY MANAGEMENT based on real patterns
         if energy_level < 0.4:
             if current_hour < 14:
-                recommendations.append("🔋 MORNING ENERGY LOW: 2-minute walk + hydrate - you have peak hours ahead")
+                recommendations.append(
+                    "🔋 MORNING ENERGY LOW: 2-minute walk + hydrate - you have peak hours ahead")
             else:
-                recommendations.append("🌅 ENERGY DEPLETED: 5-minute walk + fresh air - protect tomorrow's productivity")
-        
+                recommendations.append(
+                    "🌅 ENERGY DEPLETED: 5-minute walk + fresh air - protect tomorrow's productivity")
+
         # STRESS INTERVENTION with work history context
         if stress_level > 0.6:
             if historical_patterns['active_sessions'] > 3000:  # Experienced worker
-                recommendations.append("😤 STRESS DETECTED: You've handled 3,528 sessions before - breathe deeply and chunk current task")
+                recommendations.append(
+                    "😤 STRESS DETECTED: You've handled 3,528 sessions before - breathe deeply and chunk current task")
             else:
-                recommendations.append("😤 STRESS RISING: 4-7-8 breathing technique for 2 minutes - proven effective for developers")
-        
+                recommendations.append(
+                    "😤 STRESS RISING: 4-7-8 breathing technique for 2 minutes - proven effective for developers")
+
         # TIME-BASED RECOMMENDATIONS
         if current_hour >= 18 and hours_today > 8:
-            recommendations.append("🌅 EVENING WIND-DOWN: 8+ hour day complete - plan tomorrow's top 3 priorities then stop")
+            recommendations.append(
+                "🌅 EVENING WIND-DOWN: 8+ hour day complete - plan tomorrow's top 3 priorities then stop")
         elif current_hour <= 10 and energy_level > 0.7:
-            recommendations.append("🚀 MORNING PEAK: High energy detected - tackle your most complex problem now")
-        
+            recommendations.append(
+                "🚀 MORNING PEAK: High energy detected - tackle your most complex problem now")
+
         # ACTIVITY PATTERN ANALYSIS
         if keystrokes > 200 and mouse_clicks < 20:
-            recommendations.append("⌨️ HEAVY TYPING SESSION: Likely coding - take 30-second hand stretches every 15 minutes")
+            recommendations.append(
+                "⌨️ HEAVY TYPING SESSION: Likely coding - take 30-second hand stretches every 15 minutes")
         elif mouse_clicks > keystrokes and mouse_clicks > 50:
-            recommendations.append("🖱️ MOUSE-HEAVY WORK: Likely design/research - alternate with keyboard-focused tasks")
-        
+            recommendations.append(
+                "🖱️ MOUSE-HEAVY WORK: Likely design/research - alternate with keyboard-focused tasks")
+
         # PRODUCTIVITY SCORE INTERVENTIONS
         if productivity_score > 0.8 and energy_level > 0.6:
-            recommendations.append("🔥 HIGH PERFORMANCE MODE: Riding the wave - maintain this for max 90 more minutes then mandatory break")
+            recommendations.append(
+                "🔥 HIGH PERFORMANCE MODE: Riding the wave - maintain this for max 90 more minutes then mandatory break")
         elif productivity_score < 0.3 and hours_today > 2:
-            recommendations.append("📈 PRODUCTIVITY BOOST NEEDED: Switch tasks or take 10-minute walk - your 71k work points prove you can do better")
-        
+            recommendations.append(
+                "📈 PRODUCTIVITY BOOST NEEDED: Switch tasks or take 10-minute walk - your 71k work points prove you can do better")
+
         # HISTORICAL CONTEXT RECOMMENDATIONS
         evidence_score = historical_patterns.get('evidence_score', 0)
         if evidence_score > 1000:  # Lots of screenshots/documentation
-            recommendations.append("📊 DOCUMENTATION MASTER: Your 2,020 evidence points show great work habits - maintain this tracking")
-        
+            recommendations.append(
+                "📊 DOCUMENTATION MASTER: Your 2,020 evidence points show great work habits - maintain this tracking")
+
         # CONTEXTUAL RECOMMENDATIONS based on process analysis
         if process_patterns:
             context_recs = await self._generate_process_contextual_recommendations(
                 process_patterns, telemetry, current_app, current_hour)
             recommendations.extend(context_recs)
-        
+
         return recommendations[:3]  # Return max 3 most relevant
+
+    async def _crunch_performance_data(self, telemetry: Dict, process_patterns: Dict,
+                                       historical_patterns: Dict, current_app: str, current_hour: int) -> List[str]:
+        """INTELLIGENT DATA CRUNCHING - Actually analyze patterns for meaningful insights"""
+        insights = []
+
+        # Current metrics
+        productivity = telemetry.get('productivity_score', 0)
+        focus = telemetry.get('focus_quality', 0)
+        keystrokes = telemetry.get('total_keystrokes', 0)
+        hours_today = telemetry.get('hours_today', 0)
+
+        try:
+            # 1. APP-SPECIFIC PERFORMANCE ANALYSIS
+            if current_app.lower() in ['cursor', 'vscode', 'pycharm', 'intellij']:
+                # Coding app analysis
+                if productivity < 0.5 and keystrokes > 50:
+                    insights.append(
+                        f"⚡ CODING ALERT: {keystrokes} keystrokes but only {productivity:.0%} productive. Code quality over quantity!")
+                elif keystrokes < 20 and productivity > 0.8:
+                    insights.append(
+                        f"🤔 THINKING MODE: Low typing ({keystrokes} keys) but high productivity - planning phase detected")
+
+            elif 'chrome' in current_app.lower() or 'firefox' in current_app.lower():
+                # Browser analysis
+                if focus < 0.4:
+                    insights.append(
+                        f"🌐 BROWSER DISTRACTION: Focus at {focus:.0%} in {current_app} - research or rabbit hole?")
+
+            # 2. HOURLY PERFORMANCE PATTERN ANALYSIS
+            activity_sessions = historical_patterns.get(
+                'activity_sessions', [])
+            if activity_sessions:
+                # Find same-hour historical performance
+                same_hour_sessions = [
+                    s for s in activity_sessions[-100:] if s.get('hour') == current_hour]
+                if len(same_hour_sessions) >= 3:
+                    avg_productivity = sum(
+                        s.get('productivity', 0.5) for s in same_hour_sessions) / len(same_hour_sessions)
+                    if productivity < avg_productivity * 0.7:
+                        insights.append(
+                            f"📉 BELOW AVERAGE: {productivity:.0%} vs your typical {avg_productivity:.0%} at {current_hour}:00")
+                    elif productivity > avg_productivity * 1.3:
+                        insights.append(
+                            f"🔥 PEAK PERFORMANCE: {productivity:.0%} vs typical {avg_productivity:.0%} at {current_hour}:00!")
+
+            # 3. SESSION LENGTH INTELLIGENCE
+            if hours_today > 0:
+                # Calculate typical session length from historical data
+                work_blocks = historical_patterns.get('work_blocks', [])
+                if work_blocks:
+                    session_hours = [b.get('hours_today', 0)
+                                     for b in work_blocks[-20:]]
+                    if session_hours:
+                        avg_hours = sum(session_hours) / len(session_hours)
+                        if hours_today < avg_hours * 0.5:
+                            insights.append(
+                                f"⏰ SHORT SESSION: {hours_today:.1f}h vs your average {avg_hours:.1f}h - need to build momentum")
+                        elif hours_today > avg_hours * 1.5:
+                            insights.append(
+                                f"🚀 EXTENDED SESSION: {hours_today:.1f}h vs average {avg_hours:.1f}h - sustained focus!")
+
+            # 4. PRODUCTIVITY TRAJECTORY ANALYSIS
+            if len(activity_sessions) >= 10:
+                recent_productivity = [
+                    s.get('productivity', 0.5) for s in activity_sessions[-10:]]
+                if len(recent_productivity) >= 5:
+                    trend = (
+                        recent_productivity[-1] - recent_productivity[0]) / len(recent_productivity)
+                    if trend < -0.05:
+                        insights.append(
+                            f"📉 DECLINING TREND: Productivity dropping over last 10 sessions - need reset?")
+                    elif trend > 0.05:
+                        insights.append(
+                            f"📈 IMPROVING TREND: Productivity climbing last 10 sessions - momentum building!")
+
+            # 5. FOCUS PATTERN INTELLIGENCE
+            if focus < 0.35 and keystrokes > 100:
+                insights.append(
+                    f"🎯 SCATTERED FOCUS: High activity ({keystrokes} keys) but {focus:.0%} focus - too many distractions")
+            elif focus > 0.8 and productivity > 0.7:
+                insights.append(
+                    f"💎 FLOW STATE: {focus:.0%} focus + {productivity:.0%} productivity - maintain this zone!")
+
+            # 6. 8-HOUR GOAL INTELLIGENCE
+            if hours_today >= 1:
+                total_interactions = keystrokes + \
+                    telemetry.get('total_mouse_clicks', 0)
+                pace_per_hour = productivity * \
+                    total_interactions if total_interactions > 0 else productivity * 100
+                projected_8h_score = pace_per_hour * 8
+                if projected_8h_score < 400:  # Rough threshold
+                    insights.append(
+                        f"⚠️ 8H PACE WARNING: Current pace won't sustain quality 8h - need focus boost")
+
+        except Exception as e:
+            # Fallback - don't break if data analysis fails
+            pass
+
+        return insights[:2]  # Return max 2 intelligent insights
 
     async def _analyze_process_specific_patterns(self, current_app: str, current_hour: int) -> Dict:
         """Analyze 1000s of historical datapoints for the specific process user is doing now"""
@@ -3826,10 +4599,10 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
             crossover_files = Path.home() / "crossoverFiles"
             log_files = [
                 crossover_files / "logs" / "deskapp.log",
-                crossover_files / "logs" / "deskapp.log.1", 
+                crossover_files / "logs" / "deskapp.log.1",
                 crossover_files / "logs" / "deskapp.log.2"
             ]
-            
+
             patterns = {
                 'app_sessions': 0,
                 'activity_sessions': [],
@@ -3840,34 +4613,36 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                 'break_patterns': [],
                 'focus_indicators': []
             }
-            
+
             # Parse actual CrossOver activity logs for rich insights
             all_activity_data = []
             work_sessions = []
-            
+
             for log_file in log_files:
                 if not log_file.exists():
                     continue
-                    
+
                 try:
                     with open(log_file, 'r') as f:
                         lines = f.readlines()
-                    
+
                     # Parse detailed activity patterns
                     current_session = None
-                    
+
                     for line in lines:
                         # Extract activity counts with timestamps
                         if "Counted" in line and "key press" in line:
                             import re
-                            activity_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*Counted (\d+) key press.*?(\d+) mouse clicks.*?(\d+) scroll counts.*?([\d-]+\s[\d:]+)', line)
+                            activity_match = re.search(
+                                r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*Counted (\d+) key press.*?(\d+) mouse clicks.*?(\d+) scroll counts.*?([\d-]+\s[\d:]+)', line)
                             if activity_match:
                                 timestamp_str, keys, clicks, scrolls, server_time = activity_match.groups()
-                                
+
                                 try:
-                                    timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+                                    timestamp = datetime.strptime(
+                                        timestamp_str, "%Y-%m-%d %H:%M:%S")
                                     intensity = int(keys) + int(clicks)
-                                    
+
                                     activity_data = {
                                         'timestamp': timestamp,
                                         'hour': timestamp.hour,
@@ -3878,22 +4653,26 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                                         'server_time': server_time
                                     }
                                     all_activity_data.append(activity_data)
-                                    
+
                                 except ValueError:
                                     continue
-                        
+
                         # Extract work hours data
                         elif "hours today:" in line:
-                            hours_match = re.search(r'hours today: ([\d:]+).*?hours this week: ([\d:]+)', line)
+                            hours_match = re.search(
+                                r'hours today: ([\d:]+).*?hours this week: ([\d:]+)', line)
                             if hours_match:
                                 today_str, week_str = hours_match.groups()
-                                timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', line)
+                                timestamp_match = re.search(
+                                    r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', line)
                                 if timestamp_match:
                                     try:
-                                        timestamp = datetime.strptime(timestamp_match.group(1), "%Y-%m-%d %H:%M:%S")
+                                        timestamp = datetime.strptime(
+                                            timestamp_match.group(1), "%Y-%m-%d %H:%M:%S")
                                         today_parts = today_str.split(':')
-                                        hours_today = int(today_parts[0]) + int(today_parts[1])/60
-                                        
+                                        hours_today = int(
+                                            today_parts[0]) + int(today_parts[1])/60
+
                                         work_sessions.append({
                                             'timestamp': timestamp,
                                             'hours_today': hours_today,
@@ -3901,179 +4680,203 @@ Provide a specific, actionable recommendation (1-2 sentences) or say "No recomme
                                         })
                                     except ValueError:
                                         continue
-                        
+
                 except Exception as e:
                     continue
-            
+
             if not all_activity_data:
-                print(f"   🔍 CONTEXTUAL ANALYSIS: No detailed activity data found in CrossOver logs")
+                print(
+                    f"   🔍 CONTEXTUAL ANALYSIS: No detailed activity data found in CrossOver logs")
                 return patterns
-            
-            print(f"   🔍 CONTEXTUAL ANALYSIS: Found {len(all_activity_data)} detailed activity sessions from CrossOver logs")
-            
+
+            print(
+                f"   🔍 CONTEXTUAL ANALYSIS: Found {len(all_activity_data)} detailed activity sessions from CrossOver logs")
+
             patterns['activity_sessions'] = all_activity_data
             patterns['work_blocks'] = work_sessions
-            
+
             # Analyze hourly productivity patterns
             hour_productivity = {}
             hour_intensities = {}
-            
+
             for activity in all_activity_data:
                 hour = activity['hour']
                 intensity = activity['intensity']
-                
+
                 if hour not in hour_productivity:
                     hour_productivity[hour] = []
                     hour_intensities[hour] = []
-                
+
                 hour_productivity[hour].append(intensity)
                 hour_intensities[hour].append(intensity)
-            
+
             # Calculate average intensities per hour
             for hour in hour_productivity:
-                avg_intensity = sum(hour_productivity[hour]) / len(hour_productivity[hour])
+                avg_intensity = sum(
+                    hour_productivity[hour]) / len(hour_productivity[hour])
                 patterns['productivity_windows'][hour] = {
                     'avg_intensity': avg_intensity,
                     'session_count': len(hour_productivity[hour]),
                     'max_intensity': max(hour_productivity[hour]),
                     'min_intensity': min(hour_productivity[hour])
                 }
-            
+
             # Find optimal work windows
             if patterns['productivity_windows']:
-                sorted_hours = sorted(patterns['productivity_windows'].items(), 
-                                    key=lambda x: x[1]['avg_intensity'], reverse=True)
-                patterns['optimal_windows'] = [(h, data['avg_intensity']) for h, data in sorted_hours[:3]]
-            
+                sorted_hours = sorted(patterns['productivity_windows'].items(),
+                                      key=lambda x: x[1]['avg_intensity'], reverse=True)
+                patterns['optimal_windows'] = [
+                    (h, data['avg_intensity']) for h, data in sorted_hours[:3]]
+
             # Analyze session patterns and focus blocks
             if len(all_activity_data) > 1:
                 # Group consecutive activities into focus blocks
                 focus_blocks = []
                 current_block = [all_activity_data[0]]
-                
+
                 for i in range(1, len(all_activity_data)):
                     prev_activity = all_activity_data[i-1]
                     curr_activity = all_activity_data[i]
-                    
+
                     # If activities are within 5 minutes, consider same focus block
-                    time_diff = (curr_activity['timestamp'] - prev_activity['timestamp']).total_seconds() / 60
-                    
+                    time_diff = (
+                        curr_activity['timestamp'] - prev_activity['timestamp']).total_seconds() / 60
+
                     if time_diff <= 5 and curr_activity['intensity'] > 0:
                         current_block.append(curr_activity)
                     else:
                         if len(current_block) > 1:  # Only blocks with multiple activities
                             focus_blocks.append(current_block)
-                        current_block = [curr_activity] if curr_activity['intensity'] > 0 else []
-                
+                        current_block = [
+                            curr_activity] if curr_activity['intensity'] > 0 else []
+
                 # Add final block
                 if len(current_block) > 1:
                     focus_blocks.append(current_block)
-                
+
                 patterns['focus_indicators'] = focus_blocks
-                
+
                 # Calculate typical session lengths
                 session_lengths = []
                 for block in focus_blocks:
                     if len(block) > 1:
-                        duration = (block[-1]['timestamp'] - block[0]['timestamp']).total_seconds() / 60
+                        duration = (block[-1]['timestamp'] - block[0]
+                                    ['timestamp']).total_seconds() / 60
                         session_lengths.append(duration)
-                
+
                 patterns['session_lengths'] = session_lengths
-            
+
             # Detect break patterns (gaps in activity)
             if len(all_activity_data) > 2:
                 breaks = []
                 for i in range(1, len(all_activity_data)):
                     prev_activity = all_activity_data[i-1]
                     curr_activity = all_activity_data[i]
-                    
-                    gap_minutes = (curr_activity['timestamp'] - prev_activity['timestamp']).total_seconds() / 60
-                    
+
+                    gap_minutes = (
+                        curr_activity['timestamp'] - prev_activity['timestamp']).total_seconds() / 60
+
                     if gap_minutes > 10:  # Break longer than 10 minutes
                         breaks.append({
                             'duration': gap_minutes,
                             'start_hour': prev_activity['hour'],
                             'end_hour': curr_activity['hour']
                         })
-                
+
                 patterns['break_patterns'] = breaks
-            
+
             return patterns
-            
+
         except Exception as e:
             print(f"   ❌ Process analysis failed: {e}")
             return {}
 
-    async def _generate_process_contextual_recommendations(self, patterns: Dict, telemetry: Dict, 
-                                                         current_app: str, current_hour: int) -> List[str]:
+    async def _generate_process_contextual_recommendations(self, patterns: Dict, telemetry: Dict,
+                                                           current_app: str, current_hour: int) -> List[str]:
         """Generate recommendations based on rich contextual analysis of CrossOver data"""
         recommendations = []
-        
+
         optimal_windows = patterns.get('optimal_windows', [])
         productivity_windows = patterns.get('productivity_windows', {})
         session_lengths = patterns.get('session_lengths', [])
         focus_blocks = patterns.get('focus_indicators', [])
         break_patterns = patterns.get('break_patterns', [])
         activity_sessions = patterns.get('activity_sessions', [])
-        
-        current_intensity = telemetry.get('total_keystrokes', 0) + telemetry.get('total_mouse_clicks', 0)
-        
+
+        current_intensity = telemetry.get(
+            'total_keystrokes', 0) + telemetry.get('total_mouse_clicks', 0)
+
         # OPTIMAL TIME WINDOW ANALYSIS
         if optimal_windows and len(optimal_windows) >= 2:
             best_hour, best_intensity = optimal_windows[0]
             current_window_data = productivity_windows.get(current_hour)
-            
+
             if current_hour == best_hour:
-                recommendations.append(f"🔥 PEAK HOUR: Your historical data shows {best_intensity:.0f} avg intensity at {best_hour}:00 - this is your optimal time!")
+                recommendations.append(
+                    f"🔥 PEAK HOUR: Your historical data shows {best_intensity:.0f} avg intensity at {best_hour}:00 - this is your optimal time!")
             elif current_window_data and current_window_data['avg_intensity'] < best_intensity * 0.6:
-                recommendations.append(f"⏰ SUBOPTIMAL TIME: Current hour averages {current_window_data['avg_intensity']:.0f} vs your peak {best_intensity:.0f} at {best_hour}:00")
-        
+                recommendations.append(
+                    f"⏰ SUBOPTIMAL TIME: Current hour averages {current_window_data['avg_intensity']:.0f} vs your peak {best_intensity:.0f} at {best_hour}:00")
+
         # FOCUS BLOCK ANALYSIS
         if session_lengths:
             avg_session = sum(session_lengths) / len(session_lengths)
             longest_session = max(session_lengths)
-            
+
             # Estimate current session length (rough calculation)
             hours_today = telemetry.get('hours_today', 0)
             if hours_today > 0:
                 estimated_current_session = hours_today * 60  # Convert to minutes
-                
+
                 if estimated_current_session > avg_session * 1.5:
-                    recommendations.append(f"⏰ LONG SESSION: {estimated_current_session:.0f}min vs your typical {avg_session:.0f}min focus blocks - consider break")
+                    recommendations.append(
+                        f"⏰ LONG SESSION: {estimated_current_session:.0f}min vs your typical {avg_session:.0f}min focus blocks - consider break")
                 elif estimated_current_session > longest_session:
-                    recommendations.append(f"🚨 EXTENDED SESSION: {estimated_current_session:.0f}min exceeds your longest recorded session ({longest_session:.0f}min)")
-        
+                    recommendations.append(
+                        f"🚨 EXTENDED SESSION: {estimated_current_session:.0f}min exceeds your longest recorded session ({longest_session:.0f}min)")
+
         # ACTIVITY INTENSITY COACHING with historical context
         if activity_sessions and current_intensity > 0:
             # Get recent activity intensities for comparison
-            recent_intensities = [a['intensity'] for a in activity_sessions[-10:]]  # Last 10 sessions
+            recent_intensities = [a['intensity']
+                                  # Last 10 sessions
+                                  for a in activity_sessions[-10:]]
             if recent_intensities:
                 avg_recent = sum(recent_intensities) / len(recent_intensities)
-                max_intensity = max([a['intensity'] for a in activity_sessions])
-                
+                max_intensity = max([a['intensity']
+                                    for a in activity_sessions])
+
                 if current_intensity > avg_recent * 2:
-                    recommendations.append(f"🔥 HIGH INTENSITY: Current {current_intensity} vs recent avg {avg_recent:.0f} - peak performance, maintain for max 45min")
+                    recommendations.append(
+                        f"🔥 HIGH INTENSITY: Current {current_intensity} vs recent avg {avg_recent:.0f} - peak performance, maintain for max 45min")
                 elif current_intensity > max_intensity:
-                    recommendations.append(f"🚨 RECORD INTENSITY: {current_intensity} exceeds your historical max {max_intensity} - exceptional focus but unsustainable")
+                    recommendations.append(
+                        f"🚨 RECORD INTENSITY: {current_intensity} exceeds your historical max {max_intensity} - exceptional focus but unsustainable")
                 elif current_intensity < avg_recent * 0.3:
-                    recommendations.append(f"📉 LOW ACTIVITY: {current_intensity} vs recent avg {avg_recent:.0f} - energy dip or distraction?")
-        
+                    recommendations.append(
+                        f"📉 LOW ACTIVITY: {current_intensity} vs recent avg {avg_recent:.0f} - energy dip or distraction?")
+
         # BREAK PATTERN INSIGHTS
         if break_patterns:
-            typical_break_duration = sum([b['duration'] for b in break_patterns]) / len(break_patterns)
+            typical_break_duration = sum(
+                [b['duration'] for b in break_patterns]) / len(break_patterns)
             last_break = break_patterns[-1] if break_patterns else None
-            
+
             if last_break and last_break['duration'] < typical_break_duration * 0.5:
-                recommendations.append(f"⚡ SHORT BREAK PATTERN: Last break was {last_break['duration']:.0f}min vs typical {typical_break_duration:.0f}min - consider longer break")
-        
+                recommendations.append(
+                    f"⚡ SHORT BREAK PATTERN: Last break was {last_break['duration']:.0f}min vs typical {typical_break_duration:.0f}min - consider longer break")
+
         # PROCESS-SPECIFIC INSIGHTS
         if current_app == "Cursor" and productivity_windows:
-            cursor_sessions = [s for s in activity_sessions if s['hour'] == current_hour]
+            cursor_sessions = [
+                s for s in activity_sessions if s['hour'] == current_hour]
             if len(cursor_sessions) >= 3:
-                avg_cursor_intensity = sum([s['intensity'] for s in cursor_sessions]) / len(cursor_sessions)
+                avg_cursor_intensity = sum(
+                    [s['intensity'] for s in cursor_sessions]) / len(cursor_sessions)
                 if current_intensity > avg_cursor_intensity * 1.3:
-                    recommendations.append(f"💻 CODING INTENSITY: {current_intensity} vs typical {avg_cursor_intensity:.0f} for Cursor at {current_hour}:00")
-        
+                    recommendations.append(
+                        f"💻 CODING INTENSITY: {current_intensity} vs typical {avg_cursor_intensity:.0f} for Cursor at {current_hour}:00")
+
         return recommendations[:2]  # Max 2 contextual recommendations
 
 # ============================================================================

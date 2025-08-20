@@ -53,10 +53,11 @@ class WorkSmartDataReader:
             with open(log_file, 'r') as f:
                 lines = f.readlines()
 
-            # Look for ActivityJob entries
+            # Look for ActivityJob entries - get recent ones first
+            current_time = datetime.now()
             for line in reversed(lines[-1000:]):  # Check last 1000 lines
                 if "ActivityJob" in line and "Counted" in line:
-                    # Parse: "Counted 4 key press , 1 mouse clicks and 0 scroll counts until 2025-08-18 17:18:06"
+                    # Parse: "Counted 4 key press , 1 mouse clicks and 0 scroll counts until 2025-08-18 17:18:06 (server time)."
                     match = re.search(
                         r'Counted (\d+) key press , (\d+) mouse clicks and (\d+) scroll counts until ([\d-]+ [\d:]+)', line)
                     if match:
@@ -64,20 +65,27 @@ class WorkSmartDataReader:
                         try:
                             timestamp = datetime.strptime(
                                 timestamp_str, '%Y-%m-%d %H:%M:%S')
-                            activities.append({
-                                'timestamp': timestamp.isoformat(),
-                                'keystrokes': int(match.group(1)),
-                                'mouse_clicks': int(match.group(2)),
-                                'scroll_counts': int(match.group(3)),
-                                'source': 'WorkSmart ActivityJob'
-                            })
+                            
+                            # Only include activities from the requested time window
+                            # Note: WorkSmart logs server time which may be different from local time
+                            age_hours = (current_time - timestamp).total_seconds() / 3600
+                            if age_hours <= hours + 2:  # Add 2-hour buffer for timezone differences
+                                activities.append({
+                                    'timestamp': timestamp.isoformat(),
+                                    'keystrokes': int(match.group(1)),
+                                    'mouse_clicks': int(match.group(2)),
+                                    'scroll_counts': int(match.group(3)),
+                                    'source': 'WorkSmart ActivityJob'
+                                })
                         except ValueError:
                             continue
 
         except Exception as e:
             print(f"⚠️ Could not read WorkSmart activity logs: {e}")
 
-        return activities[-20:]  # Return last 20 activities
+        # Sort by timestamp to ensure chronological order (newest first)
+        activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        return activities[:20]  # Return most recent 20 activities
 
     def get_global_data_from_logs(self) -> Dict[str, Any]:
         """Extract global productivity data from logs"""
